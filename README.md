@@ -1,408 +1,353 @@
 # AGENTS-HQ — Autonomous Intelligence Platform
-## Project README & Status Document
+
+A modular, local-first security intelligence platform built around Ollama LLMs.
+All agents run fully on-device — no cloud AI, no telemetry, no external inference.
+Everything is bound to `127.0.0.1`. Nothing is exposed outside localhost.
 
 ---
 
-## WHAT IS THIS
+## Stack
 
-AGENTS-HQ is a modular, autonomous security intelligence platform built around local LLMs.
-Every agent runs fully on-device — no cloud, no telemetry, no external AI APIs.
-The platform chains OSINT collection, recon, red team ops, malware RE, dark web monitoring,
-and threat intelligence into a single coordinated pipeline.
-
-All services are bound to `127.0.0.1` only. Nothing is exposed outside localhost.
-
----
-
-## HARDWARE
-
-```
-MAIN LAPTOP (Command Node — where this runs)
-├── OS:      Parrot OS (Debian-based)
-├── CPU:     Intel i5 12th gen
-├── RAM:     16GB DDR4
-├── GPU:     NVIDIA RTX 3050 Laptop 4GB VRAM
-├── CUDA:    12.4  |  Driver: 550.163.01
-├── Storage: 512GB SSD (boot) + 1TB HDD (data)
-└── Docker:  v5.1.0
-```
+| Component | Technology | Port |
+|-----------|-----------|------|
+| Control Panel | FastAPI + Jinja2 + vanilla JS | 8080 |
+| Database | MySQL 8.4 (reports, IOCs, KB, threat actors) | 3306 |
+| LLM | Ollama (deepseek-r1:8b) | 11434 |
+| Workflow | n8n | 5678 |
+| Proxy | nginx (routes Docker → Ollama on host) | — |
+| Tor | osminogin/tor-simple | 9050 |
+| Agents | Python 3.12 + http.server webhooks | 8763–8770 |
 
 ---
 
-## PROJECT LOCATION
+## Quick Start
 
-```
-~/Desktop/programming_environment/agents-hq/
+### 1. Prerequisites
+
+- Docker + Docker Compose
+- Ollama running on the host with `deepseek-r1:8b` pulled
+- (Optional) Ghidra installed if using Agent-06
+
+```bash
+ollama pull deepseek-r1:8b
 ```
 
----
+### 2. Configure credentials
 
-## TECH STACK
-
-```
-INFRASTRUCTURE (Docker)
-├── n8n 2.17.7          Workflow orchestrator  — http://127.0.0.1:5678
-├── ChromaDB latest     Vector store (RAG)     — http://127.0.0.1:8000
-└── nginx:alpine        Ollama reverse proxy   — internal docker network only
-
-LOCAL SERVICES (host)
-├── Ollama              LLM runtime            — http://127.0.0.1:11434
-└── Models loaded:
-    ├── deepseek-r1:8b  (primary — all agents)
-    ├── phi3:mini       (Agent-03 RAG queries)
-    ├── mistral:7b      (available)
-    └── nomic-embed-text:latest (embeddings)
-
-AGENT RUNTIME
-├── Language:   Python 3.x (each agent has its own venv)
-├── HTTP:       requests (sync), aiohttp/httpx where async needed
-├── ReAct loop: custom implementation per agent
-└── Reports:    Markdown — written to reports/ directory
+```bash
+cp .env.example agent_01_osint/.env
+# Edit agent_01_osint/.env — fill in your API keys
+# The root .env controls MySQL passwords (docker-compose reads it)
+cp .env.example .env
+# Edit .env — set MYSQL_ROOT_PASSWORD and MYSQL_PASSWORD
 ```
 
----
-
-## FILE STRUCTURE
-
-```
-agents-hq/
-├── docker-compose.yml          n8n + ChromaDB + ollama-proxy
-├── setup_stack.sh              One-command stack launcher
-├── nginx-ollama.conf           Ollama proxy config (host copy)
-├── config.yaml                 (stub — reserved)
-├── launcher.py                 (stub — reserved)
-├── .gitignore                  Covers .env, .credentials, keys
-│
-├── runtime/
-│   └── nginx-ollama.conf       Active proxy config (mounted into container)
-│
-├── agent_01_osint/
-│   ├── agent_01_osint_v3.py    Main agent (1748 lines)
-│   ├── .env                    API keys (gitignored)
-│   └── venv/                   Python virtualenv
-│
-├── agent_02_task/
-│   ├── agent.py                Main agent (615 lines)
-│   ├── .credentials            Sudo password file (gitignored)
-│   └── .venv/                  Python virtualenv
-│
-├── agent_03_rag/
-│   ├── ingest.py               Document ingestion into ChromaDB
-│   ├── query.py                RAG query + LLM answer
-│   ├── CVE-2024-21413.md       Sample document
-│   └── agent_03_n8n_workflow.json  n8n workflow export
-│
-├── agent_04_orchestrator/
-│   └── agent_04_orchestrator.py  Master controller (580 lines)
-│
-├── agent_05_redteam/
-│   └── agent_05_redteam.py     Red team agent (700 lines)
-│
-├── agent_06_ghidra/
-│   ├── agent_06_ghidra.py      RE agent (1539 lines)
-│   └── venv/                   Python virtualenv
-│
-├── agent_07_crypto/            (directory ready — not yet built)
-├── agent_08_news_intel/        (directory ready — not yet built)
-├── agent_09_market_intel/      (directory ready — not yet built)
-├── agent_10_darkweb/           (directory ready — not yet built)
-│
-├── tools/
-│   ├── api_tools.py            (stub — reserved)
-│   ├── search.py               (stub — reserved)
-│   ├── shell_tool.py           (stub — reserved)
-│   └── file_tool.py            (stub — reserved)
-│
-├── reports/                    All agent output reports land here
-├── memory/                     Reserved for persistent agent memory
-├── models/                     Reserved for local model files
-├── n8n_workflows/              n8n workflow JSON exports
-└── yara/                       YARA rules generated by Agent-06
-```
-
----
-
-## AGENT ROSTER
-
-### Agent-01 — OSINT Collector ✅ BUILT
-**File:** `agent_01_osint/agent_01_osint_v3.py`
-**Role:** The eyes of the platform. First agent to run on any target.
-
-Maps the entire public attack surface given any target type:
-- **Domain** → WHOIS, DNS, crt.sh certs, subdomains, Wayback, reverse IP
-- **IP** → Shodan, GreyNoise, Censys, AbuseIPDB, ASN/BGP, ipinfo
-- **Email** → HIBP breach check, Hunter.io pattern, DNS of domain
-- **Phone** → Numverify carrier/region lookup
-- **Company** → web search, cert search, email harvest, Shodan
-- **Image** → exiftool EXIF/GPS extraction
-
-Intelligence sources: Shodan, GreyNoise, Censys, VirusTotal, SpiderFoot, urlscan.io,
-Wayback Machine, BGPView, ThreatFox, AlienVault OTX, crt.sh, HackerTarget,
-Hunter.io, HIBP, Numverify, ipinfo.io, SecurityTrails, AbuseIPDB, DuckDuckGo, WHOIS, dig
-
-Modes: `fast` (15 steps) | `deep` (25 steps) | `adaptive` (30 steps) | `insane` (60 steps)
-
-Webhook: `POST http://127.0.0.1:8765/webhook/agent01`
-
----
-
-### Agent-02 — Task Recon ✅ BUILT
-**File:** `agent_02_task/agent.py`
-**Role:** The penetration tester. "What can I hit and how."
-
-ReAct loop: `nmap` → `rag_lookup` → `exploitdb` → `web_search (NVD)` → `file_write`
-
-Tools: `shell`, `web_search`, `exploitdb`, `rag_lookup`, `file_write`, `python_exec`
-Sudo password loaded from `.credentials` file (gitignored).
-
----
-
-### Agent-03 — RAG Knowledge Base ✅ BUILT
-**Files:** `agent_03_rag/ingest.py` + `agent_03_rag/query.py`
-**Role:** The shared memory of the platform. Not an active agent — a store.
-
-- `ingest.py` — chunk + upsert any `.txt`/`.md` document into ChromaDB `security_docs`
-- `query.py` — cosine similarity search + phi3:mini LLM answer generation
-- Overlap chunking: 800 char chunks, 150 char overlap
-- Every other agent reads from and writes to this collection
-
----
-
-### Agent-04 — Master Orchestrator ✅ BUILT
-**File:** `agent_04_orchestrator/agent_04_orchestrator.py`
-**Role:** The mission commander. All tasks enter here first.
-
-Routing matrix:
-| Input | Pipeline |
-|-------|----------|
-| IP / Domain | Agent-01 → Agent-02 → Agent-03 (CVEs) |
-| Email / Phone / Company | Agent-01 |
-| Hash (MD5/SHA1/SHA256) | Agent-01 (VT) → Agent-06 (Ghidra) |
-| File / Binary | Agent-06 → Agent-01 (IOCs) → Agent-03 |
-| CVE ID | Agent-03 (RAG) → Agent-02 (NVD) |
-| Free text | Agent-02 |
-
-Modes: `fast` | `deep` | `auto` (default)
-Output: `reports/MASTER_{target}_{ts}.md` — consolidated report from all agents.
-Webhook: `POST http://127.0.0.1:8764/webhook/agent04`
-
----
-
-### Agent-05 — Red Team ✅ BUILT
-**File:** `agent_05_redteam/agent_05_redteam.py`
-**Role:** The offensive operator. PTES methodology + MITRE ATT&CK framework.
-
-Two phases:
-- **Phase 1 — Advisory** (always): full attack surface analysis, kill chain,
-  MITRE ATT&CK technique mapping, tool recommendations, risk priority matrix.
-- **Phase 2 — Active** (`--mode active --execute`): ReAct loop executing real attacks.
-  ⚠ Every offensive action blocked by a mandatory human approval gate in Python.
-  The LLM proposes. The human types `yes`. No exceptions. No bypass.
-
-Tools: `shell`, `metasploit`, `searchsploit`, `rag_lookup`, `file_write`
-Input: `--target` direct, or `--report` to ingest an Agent-04 MASTER report.
-Webhook: `POST http://127.0.0.1:8763/webhook/agent05` (advisory only — active needs CLI)
-
----
-
-### Agent-06 — Ghidra RE ✅ BUILT
-**File:** `agent_06_ghidra/agent_06_ghidra.py`
-**Role:** The malware analyst. Tears apart any binary.
-
-Full pipeline (deep mode):
-`binary_info` → `hash_compute` → `vt_check` → `pe_analysis` → `strings_extract`
-→ `ioc_extract` → `ghidra_decompile` → `function_map` → `yara_generate`
-→ `rag_ingest` → `file_write`
-
-Key capabilities:
-- Entropy + packer detection (DIE / manual heuristics)
-- PE/ELF/Mach-O structure analysis with suspicious import flagging
-- Headless Ghidra decompilation (auto-detects install, writes Java script)
-- MITRE ATT&CK technique mapping from function calls
-- Auto-generates deployable YARA detection rule
-- Pushes all findings into ChromaDB `security_docs`
-
-Modes: `fast` | `deep` | `insane` (double Ghidra pass)
-Receives samples from: Agent-01 (OSINT discoveries), Agent-10 (dark web finds)
-Webhook: `POST http://127.0.0.1:8766/webhook/agent06`
-
----
-
-### Agent-07 — Crypto Analysis ✅ BUILT
-**File:** `agent_07_crypto/agent_07_crypto.py`
-**Role:** The cryptography specialist.
-
-Three capability domains:
-- **Hash cracking** — auto-identifies algorithm (MD5/SHA/bcrypt/NTLM/phpass/etc.), cracks with hashcat (GPU) or john (CPU fallback) + wordlists
-- **TLS audit** — raw openssl cipher probing across SSLv3/TLS1.0/1.1/1.2/1.3, vuln checks: POODLE, BEAST, SWEET32, FREAK, RC4 bias, NULL auth
-- **Certificate chain analysis** — full X.509 chain walk, key strength, expiry, SANs, self-signed detection, signature algorithm warnings
-- **Entropy check** — Shannon entropy on any file to detect encrypted/packed binaries; flags for Agent-06 if ≥7.5 bits/byte
-
-Modes: `fast` (TLS1.2/1.3 only, no cracking) | `deep` (full sweep + crack) | `audit` (TLS + cert, no cracking)
-
-Input types:
-- `hash:<value>` → identify → crack
-- `domain` / `IP` → TLS audit + cert chain
-- `cert:<path>` → cert analysis only
-- `binary:<path>` → entropy check → flag encrypted
-
-Webhook: `POST http://127.0.0.1:8767/webhook/agent07` (TLS/cert only — hash cracking requires CLI)
-Supports: Agent-05 (red team crypto attacks), Agent-06 (encrypted binary analysis)
-
----
-
-### Agent-08 — News Intel ✅ BUILT
-**File:** `agent_08_news_intel/agent_08_news_intel.py`
-**Role:** The situational awareness feed. Runs on a 6-hour schedule via n8n cron.
-
-Five intelligence tracks, 30+ sources:
-- **CTI** — Check Point Research, Cisco Talos, Unit 42, Securelist, MSRC, CrowdStrike, BleepingComputer, THN, SANS ISC, Packet Storm, Krebs, SecurityWeek, Dark Reading
-- **CISA/NVD/OTX** — CISA KEV JSON API (actively exploited CVEs), NVD REST API (new CVEs + CVSS), AlienVault OTX pulse feed
-- **GovInt** — NSA, NCSC UK, ANSSI France, BSI Germany, CERT-EU, ENISA, FBI Cyber, AusCERT, US-CERT
-- **GeoInt** — ISW (conflict maps), Bellingcat, War on the Rocks, CSIS, Reuters Security
-- **Patents** — USPTO PatentsView API (security-relevant filings: zero-day, side-channel, firmware, crypto attacks)
-
-Pipeline: parallel feed collection → relevance scoring (CRITICAL/HIGH/MEDIUM/LOW) → LLM analysis → RAG ingest + report
-
-Webhook: `POST http://127.0.0.1:8768/webhook/agent08` — `{"since": 6}` (n8n cron triggers every 6h)
-
----
-
-### Agent-09 — Market Intel 🔜 PLANNED
-**Directory:** `agent_09_market_intel/`
-
-Financial intelligence layer.
-- OHLCV data collection
-- RSI / MACD / Bollinger Band signal generation
-- Monitors financially motivated threat actor activity
-- Tracks companies relevant to active targets
-
----
-
-### Agent-10 — Dark Web Monitor 🔜 NEXT BUILD
-**Directory:** `agent_10_darkweb/`
-
-The underground intelligence collector. Highest-value agent in the platform.
-- Monitors .onion sites, dark web markets, paste sites, threat actor forums via Tor
-- Extracts and scores IOCs by risk severity
-- Builds persistent threat actor profiles in ChromaDB
-- Pushes discovered malware samples directly to Agent-06 for RE
-- Everything it finds flows to every other agent via Agent-03
-
----
-
-## DATA FLOW
-
-```
-                        ┌─────────────────┐
-                        │   Agent-04      │
-                        │  Orchestrator   │
-                        └────────┬────────┘
-                                 │ routes
-           ┌──────────┬──────────┼──────────┬──────────┐
-           ▼          ▼          ▼          ▼          ▼
-       Agent-01   Agent-02   Agent-05   Agent-06   Agent-03
-        OSINT      Recon     Red Team   Ghidra RE    RAG
-           │          │          │          ▲          ▲
-           │          └──────────┘          │          │
-           │          feeds attack map       │          │
-           └───────────���──────────► samples  │          │
-                                            │          │
-                              Agent-10 ─────┘          │
-                              Dark Web ────────────────┘
-                                         IOCs/profiles
-
-Agent-07 (Crypto) ←→ Agent-05, Agent-06
-Agent-08 (News)   ──► Agent-03 (every 6h)
-Agent-09 (Market) ──► standalone + Agent-03
-```
-
----
-
-## WEBHOOK PORTS
-
-| Agent | Port | Endpoint |
-|-------|------|----------|
-| Agent-04 Orchestrator | 8764 | `POST /webhook/agent04` |
-| Agent-01 OSINT | 8765 | `POST /webhook/agent01` |
-| Agent-06 Ghidra RE | 8766 | `POST /webhook/agent06` |
-| Agent-05 Red Team | 8763 | `POST /webhook/agent05` (advisory only) |
-| Agent-07 Crypto | 8767 | `POST /webhook/agent07` (TLS/cert only — no hash crack via webhook) |
-| Agent-08 News Intel | 8768 | `POST /webhook/agent08` — `{"since": 6}` (n8n cron, every 6h) |
-
-All webhooks bind to `127.0.0.1` only.
-
----
-
-## HOW TO START
+### 3. Build and start
 
 ```bash
 cd ~/Desktop/programming_environment/agents-hq
+docker compose up --build -d
+```
 
-# First time only
-bash setup_stack.sh
+### 4. Open the control panel
 
-# Subsequent starts
-docker compose up -d
+```
+http://127.0.0.1:8080
+```
 
-# Verify all services
-curl -s http://127.0.0.1:5678/healthz          # n8n
-curl -s http://127.0.0.1:8000/api/v2/heartbeat # ChromaDB
-curl -s http://127.0.0.1:11434/api/tags         # Ollama
+### 5. Verify services
 
-# n8n UI
-http://127.0.0.1:5678
+```bash
+curl -s http://127.0.0.1:8080/api/status   # platform health
+curl -s http://127.0.0.1:5678/healthz       # n8n
+curl -s http://127.0.0.1:11434/api/tags     # Ollama
+```
 
-# Stop
+### Stop
+
+```bash
 docker compose down
 ```
 
----
+### Rebuild after code changes
 
-## API KEYS
-
-Stored in `agent_01_osint/.env` (gitignored). Shared across agents via `load_env()`.
-
-```
-Shodan API:          configured
-GreyNoise API:       configured
-Censys API Token:    configured
-VirusTotal API:      configured
-AlienVault OTX:      configured
-URLScan.io:          configured
-SecurityTrails:      configured
-ipinfo.io:           configured
-AbuseIPDB:           configured
+```bash
+docker compose up --build -d
 ```
 
-Free / no-key sources always available: Shodan InternetDB, crt.sh, Wayback CDX,
-BGPView, HackerTarget, DuckDuckGo, NVD NIST, ExploitDB.
+---
+
+## Control Panel (`/` — port 8080)
+
+The web UI is the primary interface for the platform. All agent runs, report viewing, and configuration happen here.
+
+| Page | URL | Description |
+|------|-----|-------------|
+| Dashboard | `/` | Platform health, agent status, stats, charts, activity timeline |
+| Agents | `/agents` | Run agents, stream live logs via SSE, tail Docker logs |
+| Reports | `/reports` | Browse all generated reports, fulltext search, delete |
+| Report Viewer | `/reports/{filename}` | Rendered markdown, IOC sidebar with pivot links |
+| Knowledge Base | `/kb` | Search MySQL RAG documents across all collections |
+| Threat Actors | `/threat-actors` | Threat actor profiles ingested by Agent-10 |
+| Settings | `/settings` | API keys, ticker watchlist, onion targets, alert channels |
+| Timeline | `/timeline` | Chronological dot-plot of all reports by agent with zoom controls |
+| IOC Explorer | `/iocs` | All extracted IOCs from all reports, filterable by type |
+| Pivot | `/pivot/{type}/{value}` | Cross-report correlation for any IOC value |
 
 ---
 
-## BUILD STATUS
+## Agent Roster
 
-| # | Agent | Status | Notes |
-|---|-------|--------|-------|
-| 01 | OSINT Collector | ✅ Complete | v3, all modes, n8n webhook |
-| 02 | Task Recon | ✅ Complete | v4, ReAct loop, sudo support |
-| 03 | RAG Knowledge Base | ✅ Complete | ingest + query, ChromaDB |
-| 04 | Master Orchestrator | ✅ Complete | v1, full routing matrix |
-| 05 | Red Team | ✅ Complete | v1, advisory + active, human gate |
-| 06 | Ghidra RE | ✅ Complete | v1, 11 tools, YARA gen, Ghidra headless |
-| 07 | Crypto Analysis | ✅ Complete | v1, hash crack, TLS audit, cert chain, entropy check |
-| 08 | News Intel | ✅ Complete | v1, 30+ sources, 5 tracks, patent feed, geoint, govint |
-| 09 | Market Intel | 🔜 Planned | directory ready |
-| 10 | Dark Web Monitor | 🔜 Next build | directory ready |
+| # | Agent | Status | Port | Schedule |
+|---|-------|--------|------|----------|
+| 01 | OSINT Collector | ✅ Built | 8765 | On-demand |
+| 02 | Task Recon | ✅ Built | — | Subprocess |
+| 03 | RAG Knowledge Base | ✅ Built | — | Passive store (MySQL) |
+| 04 | Master Orchestrator | ✅ Built | 8764 | On-demand |
+| 05 | Red Team | ✅ Built | 8763 | On-demand |
+| 06 | Ghidra RE | ✅ Built | 8766 | On-demand |
+| 07 | Crypto Analysis | ✅ Built | 8767 | On-demand |
+| 08 | News Intel | ✅ Built | 8768 | Every 6h (n8n cron) |
+| 09 | Market Intel | ✅ Built | 8769 | Daily 13:30 UTC (n8n cron) |
+| 10 | Dark Web Monitor | ✅ Built | 8770 | Every 12h (n8n cron) |
 
-**8 of 10 agents built.**
+### Agent-01 — OSINT Collector
+Maps the public attack surface of any target type:
+- **Domain** → WHOIS, DNS, crt.sh, subdomains, Wayback, reverse IP
+- **IP** → Shodan, GreyNoise, Censys, AbuseIPDB, ASN/BGP, ipinfo
+- **Email** → HIBP breach check, Hunter.io pattern, DNS
+- **Phone** → Numverify carrier/region
+- **Company** → web search, cert search, email harvest
+- **Image** → EXIF/GPS extraction
+
+Modes: `fast` (15 steps) | `deep` (25) | `adaptive` (30) | `insane` (60)
+
+Webhook: `POST http://127.0.0.1:8765/webhook/agent01`
+
+### Agent-02 — Task Recon
+Penetration testing: `nmap` → RAG lookup → ExploitDB → NVD → report.
+ReAct loop with tools: `shell`, `web_search`, `exploitdb`, `rag_lookup`, `file_write`.
+
+### Agent-03 — RAG Knowledge Base
+Passive MySQL-backed store. Not a running process.
+All other agents write to it via `tools/rag_mysql.py` after each run.
+Queryable at `/kb` in the control panel.
+
+### Agent-04 — Master Orchestrator
+Routes any input to the correct agent pipeline.
+
+| Input | Pipeline |
+|-------|----------|
+| IP / Domain | Agent-01 → Agent-02 → Agent-03 |
+| Email / Phone | Agent-01 |
+| Hash | Agent-01 (VT) → Agent-06 (Ghidra) |
+| File / Binary | Agent-06 → Agent-01 (IOCs) → Agent-03 |
+| CVE ID | Agent-03 (RAG) → Agent-02 (NVD) |
+
+Webhook: `POST http://127.0.0.1:8764/webhook/agent04`
+
+### Agent-05 — Red Team
+PTES methodology + MITRE ATT&CK framework.
+- **Advisory mode** (webhook): full attack surface analysis, kill chain, technique mapping.
+- **Active mode** (CLI only): ReAct loop with real execution — every action requires human approval (`yes`/`no` prompt, no bypass).
+
+Webhook: `POST http://127.0.0.1:8763/webhook/agent05` (advisory only)
+
+### Agent-06 — Ghidra RE
+Full binary reverse engineering pipeline:
+`binary_info` → `hash` → `VirusTotal` → `PE analysis` → `strings` → `IOC extract`
+→ `Ghidra decompile` → `function map` → `YARA generate` → `RAG ingest`
+
+Requires Ghidra installed at `$GHIDRA_PATH` (auto-detects `/opt/ghidra`).
+Webhook: `POST http://127.0.0.1:8766/webhook/agent06`
+
+### Agent-07 — Crypto Analysis
+- Hash identification + cracking (hashcat GPU / john CPU fallback)
+- TLS audit across all protocol versions, vuln checks (POODLE, BEAST, SWEET32…)
+- X.509 certificate chain analysis
+- Entropy check on binaries (flags encrypted/packed to Agent-06)
+
+Webhook: `POST http://127.0.0.1:8767/webhook/agent07` (TLS/cert only — hash cracking requires CLI)
+
+### Agent-08 — News Intel
+30+ sources across 5 intelligence tracks (CTI feeds, CISA KEV, NVD, GovCERT, GeoInt, Patents).
+Runs every 6 hours via n8n cron. Writes findings to MySQL RAG.
+
+Webhook: `POST http://127.0.0.1:8768/webhook/agent08` with `{"since": 6}`
+
+### Agent-09 — Market Intel
+Tracks cybersecurity stocks (CRWD, PANW, S, FTNT, CYBR…), generates RSI/MACD/BB signals,
+correlates market moves with threat activity from Agent-08 and Agent-10.
+
+Webhook: `POST http://127.0.0.1:8769/webhook/agent09`
+
+### Agent-10 — Dark Web Monitor
+Monitors `.onion` sites, paste sites, and leak forums via Tor.
+Extracts IOCs, builds threat actor profiles in MySQL, scores findings by severity.
+Supports Tor-proxied requests: `POST {"tor": true}`.
+
+Webhook: `POST http://127.0.0.1:8770/webhook/agent10`
 
 ---
 
-## KNOWN ISSUES / FIXED
+## Data Flow
 
-- ~~Agent-01/06 webhooks bound to `0.0.0.0`~~ → fixed to `127.0.0.1`
-- ~~Agent-06 insane mode double Ghidra pass blocked by loop guard~~ → fixed
-- ~~`N8N_RUNNERS_ENABLED` deprecated env var~~ → removed from docker-compose
-- ~~`setup_stack.sh` wrong base path~~ → fixed to correct path
-- ~~`.env` not covered by .gitignore~~ → fixed
+```
+                    ┌──────────────────────┐
+                    │    Web Control Panel │  :8080
+                    │  (run / view / pivot)│
+                    └──────────┬───────────┘
+                               │ HTTP webhooks
+        ┌──────────────────────┼──────────────────────┐
+        ▼                      ▼                      ▼
+    Agent-04             Agent-01              Agent-08/09/10
+   Orchestrator         OSINT Collector         Scheduled feeds
+        │                     │                      │
+        ├──► Agent-01          │                      │
+        ├──► Agent-02          └──► Agent-06 ◄────────┘
+        ├──► Agent-05               Ghidra RE  (binary samples)
+        └──► Agent-06          
+                               All agents
+                                   │
+                                   ▼
+                         MySQL (tools/rag_mysql.py)
+                         ├── documents        (RAG KB)
+                         ├── threat_actors    (Agent-10 profiles)
+                         └── iocs             (IOC Correlation Engine)
+```
+
+---
+
+## File Structure
+
+```
+agents-hq/
+├── docker-compose.yml           All services
+├── Dockerfile                   Shared agent image (Python 3.12)
+├── requirements.txt             Shared agent Python deps
+├── .env.example                 Template — copy to .env and agent_01_osint/.env
+├── setup_stack.sh               One-command stack launcher
+│
+├── agent_01_osint/
+│   ├── agent_01_osint_v3.py
+│   └── .env                     API keys (gitignored) — shared by all agents
+│
+├── agent_02_task/agent.py
+├── agent_03_rag/                ingest.py, query.py (legacy — MySQL is now primary)
+├── agent_04_orchestrator/agent_04_orchestrator.py
+├── agent_05_redteam/agent_05_redteam.py
+├── agent_06_ghidra/agent_06_ghidra.py
+├── agent_07_crypto/agent_07_crypto.py
+├── agent_08_news_intel/agent_08_news_intel.py
+├── agent_09_market_intel/agent_09_market_intel.py
+├── agent_10_darkweb/agent_10_darkweb.py
+│
+├── tools/
+│   └── rag_mysql.py             Shared RAG module — all agents import this
+│
+├── mysql/
+│   └── init.sql                 Schema: documents, threat_actors, iocs
+│
+├── website/                     FastAPI control panel
+│   ├── main.py
+│   ├── Dockerfile
+│   ├── routers/                 agents, reports, kb, settings, iocs
+│   ├── services/                agent_monitor, alerter, ioc_store, mysql_client, report_parser, log_streamer
+│   ├── templates/               Jinja2 HTML (base, dashboard, agents, reports, kb, threat_actors, settings, timeline, iocs, pivot)
+│   └── static/                  CSS + JS (no build step, no Node.js)
+│
+├── runtime/
+│   └── nginx-ollama.conf        Proxy config (mounted into ollama-proxy container)
+│
+├── n8n_workflows/               n8n workflow JSON exports
+├── yara/                        YARA rules generated by Agent-06
+├── reports/                     All agent output (gitignored — may contain PII)
+├── memory/                      Reserved for persistent agent memory
+└── models/                      Reserved for local model files
+```
+
+---
+
+## API Keys
+
+All keys live in `agent_01_osint/.env` (gitignored). Use the Settings page at
+`http://127.0.0.1:8080/settings` to update individual keys without editing files manually.
+
+| Key | Service | Free tier |
+|-----|---------|-----------|
+| `OTX_API_KEY` | AlienVault OTX | Yes |
+| `FINNHUB_API_KEY` | Finnhub (market data) | Yes |
+| `INTELX_API_KEY` | IntelligenceX | Yes |
+| `HIBP_API_KEY` | Have I Been Pwned | Paid |
+| `VT_API_KEY` | VirusTotal | Yes |
+| `SHODAN_API_KEY` | Shodan | Paid |
+| `GREYNOISE_API_KEY` | GreyNoise | Yes |
+| `CENSYS_ID` / `CENSYS_SECRET` | Censys | Yes |
+| `HUNTER_KEY` | Hunter.io | Yes |
+| `URLSCAN_KEY` | urlscan.io | Yes |
+| `SECURITYTRAILS_KEY` | SecurityTrails | Yes |
+| `IPINFO_TOKEN` | ipinfo.io | Yes |
+| `ABUSEIPDB_KEY` | AbuseIPDB | Yes |
+
+Free / keyless sources always available: crt.sh, Wayback CDX, BGPView, HackerTarget,
+DuckDuckGo, NVD NIST, ExploitDB, Shodan InternetDB.
+
+---
+
+## Alert System
+
+Configure in Settings → Alert Channels. Fires on any `CRITICAL` finding after an agent run.
+
+**Webhook** (Slack / Discord / custom): set `ALERT_WEBHOOK_URL` in `.env`.
+
+**Email via SMTP**: set `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `ALERT_EMAIL_TO`.
+
+Use the **Send Test** button to verify channels before relying on them.
+
+---
+
+## IOC Correlation
+
+Every report viewed in the control panel automatically ingests its IOCs into MySQL.
+Use **IOC Explorer** (`/iocs`) to browse all extracted indicators across all reports,
+then click **Pivot ↗** on any IOC to see which other reports contain it and what
+other IOCs co-occur with it in the same reports.
+
+Bulk-ingest all existing reports at once: IOC Explorer → **Scan All Reports**.
+
+---
+
+## Triggering Agents Manually
+
+Via the control panel (recommended): Agents → Run Now.
+
+Via curl:
+```bash
+# OSINT on a target
+curl -s -X POST http://127.0.0.1:8765/webhook/agent01 \
+  -H "Content-Type: application/json" \
+  -d '{"target": "example.com", "mode": "deep"}'
+
+# News intel (last 6 hours)
+curl -s -X POST http://127.0.0.1:8768/webhook/agent08 \
+  -H "Content-Type: application/json" \
+  -d '{"since": 6}'
+
+# Dark web monitor (via Tor)
+curl -s -X POST http://127.0.0.1:8770/webhook/agent10 \
+  -H "Content-Type: application/json" \
+  -d '{"tor": true}'
+```
+
+---
+
+## Hardware
+
+```
+OS:      Parrot OS (Debian-based)
+CPU:     Intel i5 12th gen
+RAM:     16 GB DDR4
+GPU:     NVIDIA RTX 3050 Laptop 4 GB VRAM  (CUDA 12.4)
+Storage: 512 GB SSD + 1 TB HDD
+Docker:  v5.1.0
+```
