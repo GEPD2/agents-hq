@@ -1,0 +1,39 @@
+# ── Credentials — never commit ────────────────────────────────
+**/.env
+**/.credentials
+**/password.txt
+**/.sudo_pass
+**/.n8n_key.txt
+*.key
+*.secret
+
+# ── Python virtual environments ───────────────────────────────
+venv/
+.venv/
+env/
+.env.local
+
+# ── Python bytecode ───────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# ── Generated reports (runtime output — may contain PII) ──────
+reports/
+
+# ── Runtime / local data ──────────────────────────────────────
+memory/
+models/
+
+# ── Ghidra analysis projects (large binary data) ──────────────
+agent_06_ghidra/ghidra_projects/
+
+# ── Docker & build artefacts ──────────────────────────────────
+*.tar
+*.tar.gz
+
+# ── OS noise ──────────────────────────────────────────────────
+.DS_Store
+Thumbs.db

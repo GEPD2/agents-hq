@@ -1,0 +1,30 @@
+# Python
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+**/venv/
+**/.venv/
+**/*.egg-info/
+
+# Secrets — never bake into image; mount via docker-compose volumes
+**/.env
+
+# Ghidra project files — large, ephemeral, bind-mounted at runtime
+**/ghidra_projects/
+
+# Reports — bind-mounted at runtime
+reports/
+
+# YARA output — bind-mounted at runtime
+yara/
+
+# Dev / build artifacts
+*.deb
+*.docx
+*.sqlite
+**/.DS_Store
+
+# Git
+.git/
+.gitignore

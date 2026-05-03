@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block nav_reports %}active{% endblock %}
+{% block breadcrumb %}Reports{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title">Report Browser</div>
+  <div class="page-sub">All generated intelligence reports, grouped by agent</div>
+</div>
+
+<div class="search-bar">
+  <input class="search-input" id="search-input" type="text" placeholder="Search reports by filename…">
+</div>
+
+<div class="tabs" id="filter-tabs" style="margin-bottom:16px">
+  <!-- filled by JS -->
+</div>
+
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Filename</th>
+          <th>Agent</th>
+          <th>Size</th>
+          <th>Created</th>
+          <th>Priorities</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="reports-tbody">
+        <tr><td colspan="6"><div class="empty"><span class="spinner"></span></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/reports.js"></script>
+{% endblock %}

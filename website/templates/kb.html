@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Knowledge Base{% endblock %}
+{% block nav_kb %}active{% endblock %}
+{% block breadcrumb %}Knowledge Base{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title">Knowledge Base</div>
+  <div class="page-sub">Browse and search ChromaDB vector store</div>
+</div>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('search', this)">🔍 Semantic Search</button>
+  <button class="tab-btn" onclick="switchTab('collections', this)">🗄️ Collections</button>
+</div>
+
+<!-- Search tab -->
+<div class="tab-pane active" id="tab-search">
+  <div class="card mb-4">
+    <div class="card-header">
+      <span class="card-title">Semantic Search</span>
+    </div>
+    <div style="display:flex;gap:10px;align-items:flex-end">
+      <div class="form-group" style="flex:1;margin:0">
+        <input class="form-input w-full" id="search-q" type="text" placeholder="Search threat intelligence… e.g. 'ransomware CVE-2024'">
+      </div>
+      <div class="form-group" style="width:80px;margin:0">
+        <input class="form-input" id="search-n" type="number" value="10" min="1" max="50" title="Max results">
+      </div>
+      <button class="btn btn-primary" onclick="doSearch()">Search</button>
+    </div>
+  </div>
+  <div id="search-results">
+    <div class="empty">Enter a query to search the knowledge base</div>
+  </div>
+</div>
+
+<!-- Collections tab -->
+<div class="tab-pane" id="tab-collections">
+  <div id="collections-list">
+    <div class="empty"><span class="spinner"></span> Loading…</div>
+  </div>
+
+  <div id="browse-panel" style="display:none;margin-top:20px">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title" id="browse-title">Collection</span>
+        <button class="btn btn-outline btn-sm" onclick="document.getElementById('browse-panel').style.display='none'">Close</button>
+      </div>
+      <div id="browse-docs"></div>
+      <div id="browse-pager" style="display:flex;gap:8px;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)"></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/kb.js"></script>
+{% endblock %}

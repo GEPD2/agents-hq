@@ -1,0 +1,8 @@
+# AGENTS-HQ Python dependencies
+# Agent-02, 06: HTTP client
+requests==2.32.3
+# Agent-06: PE/ELF binary parsing
+pefile==2023.2.7
+# Agent-06: fuzzy hashing — ssdeep CLI binary installed via apt (libfuzzy-dev + ssdeep)
+# Agent RAG storage — MySQL client
+pymysql

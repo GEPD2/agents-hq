@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Pivot — {{ value }}{% endblock %}
+{% block nav_iocs %}active{% endblock %}
+{% block breadcrumb %}IOC Explorer / Pivot{% endblock %}
+
+{% block content %}
+<span id="pivot-data" data-type="{{ ioc_type }}" data-value="{{ value }}" style="display:none"></span>
+
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+  <a href="/iocs" class="btn btn-outline btn-sm">← IOC Explorer</a>
+  <span id="pivot-type-badge" class="ioc-tag" style="font-size:13px;padding:4px 12px"></span>
+  <span id="pivot-value" style="font-size:16px;font-weight:600;color:var(--text)"></span>
+</div>
+
+<div class="grid-2" style="align-items:start">
+  <!-- Left: reports that contain this IOC -->
+  <div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Appears in <span id="pivot-report-count" class="text-purple">—</span> reports</span>
+      </div>
+      <table class="table" style="width:100%">
+        <thead>
+          <tr>
+            <th>Report</th>
+            <th>Agent</th>
+            <th>Seen</th>
+          </tr>
+        </thead>
+        <tbody id="pivot-reports-tbody">
+          <tr><td colspan="3" style="text-align:center;padding:24px;color:var(--muted)"><span class="spinner"></span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Right: related IOCs -->
+  <div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Related IOCs <span id="pivot-related-count" class="text-muted" style="font-size:11px"></span></span>
+      </div>
+      <div id="pivot-related" style="min-height:60px">
+        <div class="empty"><span class="spinner"></span></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/pivot.js"></script>
+{% endblock %}

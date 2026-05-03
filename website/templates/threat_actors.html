@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Threat Actors{% endblock %}
+{% block nav_ta %}active{% endblock %}
+{% block breadcrumb %}Threat Actors{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title">Threat Actor Profiles</div>
+  <div class="page-sub">
+    Persistent profiles built by Agent-10 — <span id="ta-count">0</span> groups tracked
+  </div>
+</div>
+
+<div class="search-bar">
+  <input class="search-input" id="ta-search" type="text" placeholder="Filter threat actors…">
+</div>
+
+<div class="grid-3 mb-4" id="ta-grid">
+  <div class="empty" style="grid-column:1/-1"><span class="spinner"></span> Loading…</div>
+</div>
+
+<!-- Profile panel (shown on click) -->
+<div id="ta-profile" style="display:none" class="card">
+  <div class="card-header">
+    <span class="card-title" id="ta-profile-name">Profile</span>
+    <button class="btn btn-outline btn-sm" onclick="document.getElementById('ta-profile').style.display='none'">Close</button>
+  </div>
+  <div id="ta-profile-content" class="report-content"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/threat_actors.js"></script>
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}IOC Explorer{% endblock %}
+{% block nav_iocs %}active{% endblock %}
+{% block breadcrumb %}IOC Explorer{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title">IOC Explorer</div>
+  <div class="page-sub">Indicators of compromise extracted across all reports</div>
+</div>
+
+<!-- Stats row -->
+<div id="ioc-stats-row" class="grid-4 mb-4">
+  <div class="empty" style="grid-column:1/-1"><span class="spinner"></span></div>
+</div>
+
+<!-- Controls -->
+<div class="card">
+  <div class="card-header" style="flex-wrap:wrap;gap:8px">
+    <div id="ioc-type-tabs" style="display:flex;gap:4px;flex-wrap:wrap"></div>
+    <div style="margin-left:auto;display:flex;gap:8px">
+      <button class="btn btn-outline btn-sm" id="btn-ingest-all" onclick="ingestAll()">Scan All Reports</button>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <table class="table" style="width:100%">
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Value</th>
+        <th style="text-align:center">Reports</th>
+        <th>Last Seen</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="ioc-tbody">
+      <tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted)"><span class="spinner"></span></td></tr>
+    </tbody>
+  </table>
+
+  <!-- Pagination -->
+  <div style="display:flex;justify-content:center;gap:8px;padding:12px 0" id="ioc-pagination"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/iocs.js"></script>
+{% endblock %}

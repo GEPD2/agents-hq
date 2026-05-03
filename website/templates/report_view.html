@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Report Viewer{% endblock %}
+{% block nav_reports %}active{% endblock %}
+{% block breadcrumb %}Reports / <span id="report-title">Loading…</span>{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+{% endblock %}
+
+{% block content %}
+<!-- Hidden data element with the filename -->
+<span id="report-filename" data-filename="{{ filename }}" style="display:none"></span>
+
+<div style="display:flex;gap:16px;align-items:flex-start">
+  <!-- Main report -->
+  <div style="flex:1;min-width:0">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+      <a href="/reports" class="btn btn-outline btn-sm">← Back</a>
+      <span id="report-title" style="font-size:14px;font-weight:600;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ filename }}</span>
+      <button class="btn btn-outline btn-sm" id="btn-raw" onclick="toggleRaw()">Raw</button>
+      <button class="btn btn-outline btn-sm" onclick="printReport()">Print</button>
+    </div>
+    <div id="report-content" style="min-height:200px">
+      <div class="empty"><span class="spinner"></span></div>
+    </div>
+  </div>
+
+  <!-- IOC Sidebar -->
+  <div style="width:260px;flex-shrink:0">
+    <div class="card" style="position:sticky;top:0">
+      <div class="card-header">
+        <span class="card-title">IOCs <span id="ioc-count" class="text-purple">0</span></span>
+        <button class="btn btn-outline btn-sm" onclick="copyAllIocs()" title="Copy all IOCs as JSON">Copy All</button>
+      </div>
+      <div id="ioc-panel" style="max-height:70vh;overflow-y:auto">
+        <div class="text-muted" style="font-size:11px">Loading…</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/report_view.js"></script>
+{% endblock %}

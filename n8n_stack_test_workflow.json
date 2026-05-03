@@ -1,0 +1,85 @@
+{
+  "name": "AGENTS-HQ Stack Test",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "trigger-1",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://ollama-proxy:11434/api/generate",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "phi3:mini"
+            },
+            {
+              "name": "prompt",
+              "value": "Reply with exactly: AGENTS-HQ STACK ONLINE"
+            },
+            {
+              "name": "stream",
+              "value": false
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "ollama-test-1",
+      "name": "Test Ollama (phi3:mini)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://chromadb:8000/api/v1/heartbeat",
+        "options": {}
+      },
+      "id": "chroma-test-1",
+      "name": "Test ChromaDB",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [460, 480]
+    },
+    {
+      "parameters": {
+        "jsCode": "const ollamaResp = $('Test Ollama (phi3:mini)').first().json;\nconst chromaResp = $('Test ChromaDB').first().json;\n\nreturn [{\n  json: {\n    timestamp: new Date().toISOString(),\n    ollama_status: ollamaResp.response ? 'ONLINE' : 'ERROR',\n    ollama_response: ollamaResp.response?.trim(),\n    chromadb_status: chromaResp.nanosecond_heartbeat ? 'ONLINE' : 'ERROR',\n    stack: 'AGENTS-HQ'\n  }\n}];"
+      },
+      "id": "summarize-1",
+      "name": "Build Status Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [700, 380]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {"node": "Test Ollama (phi3:mini)", "type": "main", "index": 0},
+          {"node": "Test ChromaDB", "type": "main", "index": 0}
+        ]
+      ]
+    },
+    "Test Ollama (phi3:mini)": {
+      "main": [[{"node": "Build Status Report", "type": "main", "index": 0}]]
+    },
+    "Test ChromaDB": {
+      "main": [[{"node": "Build Status Report", "type": "main", "index": 0}]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{"name": "agents-hq"}, {"name": "validation"}]
+}

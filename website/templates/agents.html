@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Agents{% endblock %}
+{% block nav_agents %}active{% endblock %}
+{% block breadcrumb %}Agents{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title">Agent Control Panel</div>
+  <div class="page-sub">Trigger, monitor, and configure each agent</div>
+</div>
+
+<div id="agents-container">
+  <div class="empty"><span class="spinner"></span> Loading agents…</div>
+</div>
+
+<!-- Run Now Modal -->
+<div class="modal-overlay" id="run-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-agent-name">Run Agent</span>
+      <button class="modal-close" onclick="closeRunModal()">×</button>
+    </div>
+
+    <div class="form-group" id="modal-target-row">
+      <label class="form-label">Target</label>
+      <input class="form-input" id="modal-target" type="text" placeholder="domain.com / IP / email / hash / binary path…">
+    </div>
+
+    <div class="form-group" id="modal-mode-row">
+      <label class="form-label">Mode</label>
+      <select class="form-input" id="modal-mode">
+        <option value="adaptive">adaptive (auto)</option>
+        <option value="fast">fast</option>
+        <option value="deep">deep</option>
+        <option value="insane">insane</option>
+      </select>
+    </div>
+
+    <div class="form-group" id="modal-since-row">
+      <label class="form-label">Lookback (hours)</label>
+      <input class="form-input" id="modal-since" type="number" value="6" min="1" max="168">
+    </div>
+
+    <div class="form-group" id="modal-tor-row">
+      <label class="form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer">
+        <input type="checkbox" id="modal-tor" style="width:auto">
+        Use Tor (Agent-10 dark web mode)
+      </label>
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px">
+      <button class="btn btn-outline" onclick="closeRunModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitRun()">▶ Run Now</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/agents.js"></script>
+{% endblock %}

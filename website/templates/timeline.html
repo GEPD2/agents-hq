@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Timeline{% endblock %}
+{% block nav_timeline %}active{% endblock %}
+{% block breadcrumb %}Timeline{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title">Threat Activity Timeline</div>
+  <div class="page-sub">All agent reports chronologically — click any dot to open the report</div>
+</div>
+
+<div class="card">
+  <div class="card-header" style="flex-wrap:wrap;gap:8px">
+    <span class="card-title">Activity Timeline</span>
+    <div style="display:flex;gap:4px">
+      <button class="btn btn-outline btn-sm tl-zoom-btn" onclick="setZoom('day',this)">Day</button>
+      <button class="btn btn-outline btn-sm tl-zoom-btn" onclick="setZoom('week',this)">Week</button>
+      <button class="btn btn-outline btn-sm tl-zoom-btn active" onclick="setZoom('month',this)">Month</button>
+      <button class="btn btn-outline btn-sm tl-zoom-btn" onclick="setZoom('all',this)">All</button>
+    </div>
+  </div>
+  <div id="tl-legend" style="display:flex;gap:16px;padding:0 0 14px 0;flex-wrap:wrap;font-size:11px;color:#9ca3af"></div>
+  <div id="tl-main" style="width:100%;min-height:120px">
+    <div class="empty"><span class="spinner"></span></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/timeline.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  try {
+    const r = await fetch("/api/reports");
+    const reports = await r.json();
+    tlInit(reports);
+    buildLegend(reports);
+  } catch(e) {
+    document.getElementById("tl-main").innerHTML = '<div class="tl-empty">Failed to load reports</div>';
+  }
+});
+
+function buildLegend(reports) {
+  const legend = document.getElementById("tl-legend");
+  const seen = {};
+  reports.forEach(r => {
+    if (r.agent && r.agent !== "unknown" && !seen[r.agent]) {
+      seen[r.agent] = true;
+      const color = TL_COLORS[r.agent] || "#6b7280";
+      const label = TL_LABELS[r.agent] || `Agent-${r.agent}`;
+      legend.innerHTML += `<span style="display:flex;align-items:center;gap:5px">
+        <span style="width:9px;height:9px;border-radius:50%;background:${color};flex-shrink:0"></span>${label}
+      </span>`;
+    }
+  });
+  legend.innerHTML += `<span style="display:flex;align-items:center;gap:5px">
+    <span style="width:9px;height:9px;border-radius:50%;background:#ef4444;box-shadow:0 0 5px #ef4444;flex-shrink:0"></span>CRITICAL
+  </span>`;
+}
+</script>
+{% endblock %}

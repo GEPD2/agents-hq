@@ -1,0 +1,392 @@
+# ============================================================
+#  AGENTS-HQ — Full Stack
+#  Infrastructure : n8n | MySQL | Ollama Proxy | Tor
+#  Agents         : 01 04 05 06 07 08 09 10 (webhook servers)
+#  Notes          :
+#    - Agent-02 has no webhook mode; triggered by Agent-04 or n8n exec node
+#    - Agent-03 is not a process; it IS ChromaDB (vector store)
+#    - All agent containers use network_mode: host so they reach
+#      Ollama (localhost:11434) and ChromaDB (localhost:8000) directly
+#    - Agents bind their webhook ports (8763-8770) on the host directly
+#  Host: Parrot OS | RTX 3050 4GB | CUDA 12.4
+# ============================================================
+
+
+# ── Shared agent base (YAML anchor) ──────────────────────────
+# ── Shared log rotation (10 MB × 5 files per container) ──────
+x-logging: &logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+
+x-agent-base: &agent-base
+  build:
+    context: .
+    dockerfile: Dockerfile
+  image: agents-hq:latest
+  restart: unless-stopped
+  network_mode: host
+  logging: *logging
+  volumes:
+    - ./reports:/agents-hq/reports
+    - ./tools:/agents-hq/tools:ro
+    # Mount the shared .env so all agents pick up API keys.
+    # Create this file first: cp .env.example agent_01_osint/.env
+    - ./agent_01_osint/.env:/agents-hq/agent_01_osint/.env:ro
+  depends_on:
+    - mysql
+    - ollama-proxy
+
+
+services:
+
+  # ──────────────────────────────────────────────────────────
+  #  INFRASTRUCTURE
+  # ──────────────────────────────────────────────────────────
+
+  # n8n — Visual Workflow Orchestrator
+  # UI: http://127.0.0.1:5678
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: agents-n8n
+    restart: unless-stopped
+    logging: *logging
+    ports:
+      - "127.0.0.1:5678:5678"
+    environment:
+      - N8N_HOST=0.0.0.0
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://127.0.0.1:5678
+      - GENERIC_TIMEZONE=Europe/Athens
+      - TZ=Europe/Athens
+      - N8N_ENCRYPTION_KEY=9f67edb15050c38222daa8839603c10b
+      - N8N_SECURE_COOKIE=false
+      - N8N_DIAGNOSTICS_ENABLED=false
+      - N8N_SENTRY_DSN=
+      - N8N_VERSION_NOTIFICATIONS_ENABLED=false
+      - N8N_TEMPLATES_ENABLED=false
+      - N8N_PERSONALIZATION_ENABLED=false
+      - EXTERNAL_FRONTEND_HOOKS_URLS=
+      - N8N_METRICS=false
+      - DB_TYPE=sqlite
+      - DB_SQLITE_DATABASE=/home/node/.n8n/database.sqlite
+      - EXECUTIONS_MODE=regular
+      - EXECUTIONS_DATA_SAVE_ON_ERROR=all
+      - EXECUTIONS_DATA_SAVE_ON_SUCCESS=all
+      - EXECUTIONS_DATA_SAVE_ON_PROGRESS=true
+      - EXECUTIONS_DATA_MAX_AGE=336
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n_workflows:/home/node/.n8n/workflows_backup
+      - ./reports:/agents-hq/reports
+      - ./memory:/agents-hq/memory:ro
+      # Agent code (read-only) — for n8n Execute Command nodes
+      - ./agent_01_osint:/agents-hq/agent_01_osint:ro
+      - ./agent_02_task:/agents-hq/agent_02_task:ro
+      - ./agent_03_rag:/agents-hq/agent_03_rag:ro
+      - ./agent_04_orchestrator:/agents-hq/agent_04_orchestrator:ro
+      - ./agent_05_redteam:/agents-hq/agent_05_redteam:ro
+      - ./agent_06_ghidra:/agents-hq/agent_06_ghidra:ro
+      - ./agent_07_crypto:/agents-hq/agent_07_crypto:ro
+      - ./agent_08_news_intel:/agents-hq/agent_08_news_intel:ro
+      - ./agent_09_market_intel:/agents-hq/agent_09_market_intel:ro
+      - ./agent_10_darkweb:/agents-hq/agent_10_darkweb:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - agents-net
+    depends_on:
+      - mysql
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5678/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+
+  # MySQL — Document & Knowledge Base storage  (replaces ChromaDB)
+  # Connection: localhost:3306  db=agents_hq  user=agents  pass=agents_hq
+  mysql:
+    image: mysql:8.4
+    container_name: agents-mysql
+    restart: unless-stopped
+    logging: *logging
+    ports:
+      - "127.0.0.1:3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-agents_root_hq}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-agents_hq}
+      - MYSQL_USER=${MYSQL_USER:-agents}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-agents_hq}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - agents-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uagents", "-pagents_hq"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+
+  # Ollama Proxy — nginx reverse proxy into the Docker network
+  # Lets n8n reach Ollama at http://ollama-proxy:11434
+  ollama-proxy:
+    image: nginx:alpine
+    container_name: agents-ollama-proxy
+    restart: unless-stopped
+    logging: *logging
+    volumes:
+      - ./runtime/nginx-ollama.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - agents-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - mysql
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+
+  # Tor daemon — used by Agent-10 Dark Web Monitor (opt-in)
+  # network_mode: host exposes SOCKS5 proxy at localhost:9050
+  # Agent-10 connects to it when operator selects Tor mode at startup
+  tor:
+    image: osminogin/tor-simple:latest
+    container_name: agents-tor
+    restart: unless-stopped
+    logging: *logging
+    network_mode: host
+    healthcheck:
+      test: ["CMD", "nc", "-z", "127.0.0.1", "9050"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+
+  # ──────────────────────────────────────────────────────────
+  #  AGENTS — webhook servers
+  #  All use network_mode: host:
+  #    - Connect to Ollama at localhost:11434 (host process)
+  #    - Connect to ChromaDB at localhost:8000 (Docker, host-bound)
+  #    - Bind their own webhook port directly on the host
+  #
+  #  Trigger via n8n HTTP Request node or POST:
+  #    curl -X POST http://localhost:<port>/webhook/agent<NN> -d '{}'
+  # ──────────────────────────────────────────────────────────
+
+  # Agent-01 — OSINT Collector  (port 8765)
+  agent-01:
+    <<: *agent-base
+    container_name: agents-agent01
+    command: >
+      python3 /agents-hq/agent_01_osint/agent_01_osint_v3.py --n8n-server
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8765/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+
+  # Agent-04 — Master Orchestrator  (port 8764)
+  agent-04:
+    <<: *agent-base
+    container_name: agents-agent04
+    command: >
+      python3 /agents-hq/agent_04_orchestrator/agent_04_orchestrator.py --n8n-server
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8764/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+
+  # Agent-05 — Red Team  (port 8763)
+  agent-05:
+    <<: *agent-base
+    container_name: agents-agent05
+    command: >
+      python3 /agents-hq/agent_05_redteam/agent_05_redteam.py --n8n-server
+    # NET_RAW + NET_ADMIN allow raw socket operations for active red team probes
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8763/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+
+  # Agent-06 — Ghidra RE  (port 8766)
+  # Ghidra: set GHIDRA_PATH in your shell or .env to the install directory.
+  # The agent auto-detects /opt/ghidra; mount your Ghidra there.
+  # Example: GHIDRA_PATH=/home/v/tools/ghidra docker compose up agent-06
+  agent-06:
+    <<: *agent-base
+    container_name: agents-agent06
+    command: >
+      python3 /agents-hq/agent_06_ghidra/agent_06_ghidra.py --n8n-server
+    volumes:
+      - ./reports:/agents-hq/reports
+      - ./yara:/agents-hq/yara
+      - ./agent_06_ghidra/ghidra_projects:/agents-hq/agent_06_ghidra/ghidra_projects
+      - ./agent_01_osint/.env:/agents-hq/agent_01_osint/.env:ro
+      # Mount your Ghidra installation at /opt/ghidra (agent auto-detects this path)
+      - ${GHIDRA_PATH:-/opt/ghidra}:/opt/ghidra:ro
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8766/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+
+  # Agent-07 — Crypto Analysis  (port 8767)
+  # GPU hashcat: uncomment the deploy block below and ensure the
+  # NVIDIA Container Toolkit is installed (nvidia-ctk runtime configure --runtime=docker)
+  agent-07:
+    <<: *agent-base
+    container_name: agents-agent07
+    command: >
+      python3 /agents-hq/agent_07_crypto/agent_07_crypto.py --n8n-server
+    volumes:
+      - ./reports:/agents-hq/reports
+      - ./agent_01_osint/.env:/agents-hq/agent_01_osint/.env:ro
+      # Mount system wordlists so hashcat/john can use rockyou.txt etc.
+      - /usr/share/wordlists:/usr/share/wordlists:ro
+    # ── GPU passthrough (RTX 3050) — uncomment to enable ──────
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8767/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+
+  # Agent-08 — News Intel  (port 8768)
+  # n8n cron: every 6h → POST http://localhost:8768/webhook/agent08
+  agent-08:
+    <<: *agent-base
+    container_name: agents-agent08
+    command: >
+      python3 /agents-hq/agent_08_news_intel/agent_08_news_intel.py --n8n-server
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8768/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+
+  # Agent-09 — Market Intel  (port 8769)
+  # n8n cron: daily at 13:30 UTC → POST http://localhost:8769/webhook/agent09
+  agent-09:
+    <<: *agent-base
+    container_name: agents-agent09
+    command: >
+      python3 /agents-hq/agent_09_market_intel/agent_09_market_intel.py --n8n-server
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8769/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+
+  # Agent-10 — Dark Web Monitor  (port 8770)
+  # n8n cron: every 12h → POST http://localhost:8770/webhook/agent10
+  # Tor mode: POST {"tor": true} — requires the tor service to be running
+  agent-10:
+    <<: *agent-base
+    container_name: agents-agent10
+    command: >
+      python3 /agents-hq/agent_10_darkweb/agent_10_darkweb.py --n8n-server
+    depends_on:
+      - mysql
+      - ollama-proxy
+      - tor
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8770/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+
+  # Website — AGENTS-HQ Control Panel  (port 8080)
+  website:
+    build:
+      context: ./website
+      dockerfile: Dockerfile
+    image: agents-hq-website:latest
+    container_name: agents-website
+    restart: unless-stopped
+    logging: *logging
+    network_mode: host          # reach agents at localhost:8763-8770, MySQL at 3306
+    volumes:
+      - ./reports:/agents-hq/reports:ro
+      - ./agent_01_osint/.env:/agents-hq/agent_01_osint/.env
+      - ./agent_09_market_intel:/agents-hq/agent_09_market_intel
+      - ./agent_10_darkweb:/agents-hq/agent_10_darkweb
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - REPORTS_DIR=/agents-hq/reports
+      - AGENTS_BASE_DIR=/agents-hq
+      - MYSQL_HOST=localhost
+      - MYSQL_PORT=3306
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-agents_hq}
+      - MYSQL_USER=${MYSQL_USER:-agents}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-agents_hq}
+    depends_on:
+      - mysql
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/api/status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+
+# ──────────────────────────────────────────────────────────────
+#  Named Volumes
+# ──────────────────────────────────────────────────────────────
+volumes:
+  n8n_data:
+    driver: local
+  mysql_data:
+    driver: local
+
+
+# ──────────────────────────────────────────────────────────────
+#  Internal Network — infrastructure services only
+#  Agent containers bypass this via network_mode: host
+# ──────────────────────────────────────────────────────────────
+networks:
+  agents-net:
+    driver: bridge
+    internal: false
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16

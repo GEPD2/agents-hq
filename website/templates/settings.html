@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block nav_settings %}active{% endblock %}
+{% block breadcrumb %}Settings{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title">Settings</div>
+  <div class="page-sub">API keys, watchlist, and onion targets</div>
+</div>
+
+<div class="grid-2" style="align-items:start">
+  <!-- Left column -->
+  <div>
+    <!-- API Keys -->
+    <div class="card settings-section">
+      <div class="card-header">
+        <span class="card-title">API Keys</span>
+        <span class="text-muted" style="font-size:10px">Values masked — click Edit to update</span>
+      </div>
+      <div style="background:rgba(234,179,8,0.08);border:1px solid rgba(234,179,8,0.25);border-radius:5px;padding:8px 12px;margin-bottom:12px;font-size:11px;color:var(--medium)">
+        <strong>HIBP_API_KEY</strong> — needed for breach lookups: <a href="https://haveibeenpwned.com/API/Key" target="_blank" style="color:var(--medium)">haveibeenpwned.com/API/Key</a><br>
+        Most other keys already set in <code style="font-size:10px">agent_01_osint/.env</code>
+      </div>
+      <div id="env-keys">
+        <div class="empty"><span class="spinner"></span></div>
+      </div>
+    </div>
+
+    <!-- Onion Targets -->
+    <div class="card settings-section mt-3">
+      <div class="card-header">
+        <span class="card-title">ONION_TARGETS (Agent-10)</span>
+        <button class="btn btn-primary btn-sm" onclick="saveOnionTargets()">Save</button>
+      </div>
+      <div id="onion-editor">
+        <div class="empty"><span class="spinner"></span></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+        <input class="form-input" id="onion-name" type="text" placeholder="Group name" style="flex:1">
+        <input class="form-input" id="onion-addr" type="text" placeholder="address.onion" style="flex:2">
+        <button class="btn btn-outline btn-sm" onclick="addOnion()">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right column -->
+  <div>
+    <!-- Watchlist -->
+    <div class="card settings-section">
+      <div class="card-header">
+        <span class="card-title">Ticker Watchlist (Agent-09)</span>
+        <button class="btn btn-primary btn-sm" onclick="saveWatchlist()">Save</button>
+      </div>
+      <div id="watchlist-editor">
+        <div class="empty"><span class="spinner"></span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Alerts section (full width below) -->
+<div class="card settings-section mt-3">
+  <div class="card-header">
+    <span class="card-title">Alert Channels</span>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-outline btn-sm" id="btn-test-alert" onclick="testAlert()">Send Test</button>
+      <button class="btn btn-primary btn-sm" onclick="saveAlerts()">Save</button>
+    </div>
+  </div>
+  <div style="font-size:11px;color:var(--muted);margin-bottom:14px">
+    Fires automatically when an agent run produces <span class="badge badge-critical">CRITICAL</span> findings.
+  </div>
+
+  <!-- Webhook -->
+  <div class="form-group mb-3">
+    <label class="form-label">Webhook URL <span class="text-muted" style="font-size:10px">(Slack / Discord / custom HTTP POST)</span></label>
+    <input class="form-input w-full" id="alert-webhook-url" type="text" placeholder="https://hooks.slack.com/services/…">
+  </div>
+
+  <!-- SMTP -->
+  <div style="border-top:1px solid var(--border);padding-top:14px">
+    <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:10px">Email via SMTP</div>
+    <div class="grid-2" style="gap:8px">
+      <div class="form-group">
+        <label class="form-label">SMTP Host</label>
+        <input class="form-input w-full" id="alert-smtp-host" type="text" placeholder="smtp.gmail.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">SMTP Port</label>
+        <input class="form-input w-full" id="alert-smtp-port" type="text" placeholder="587">
+      </div>
+      <div class="form-group">
+        <label class="form-label">SMTP User (from address)</label>
+        <input class="form-input w-full" id="alert-smtp-user" type="text" placeholder="alerts@example.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">SMTP Password</label>
+        <input class="form-input w-full" id="alert-smtp-password" type="password" placeholder="app password">
+      </div>
+    </div>
+    <div class="form-group mt-2">
+      <label class="form-label">Send Alerts To</label>
+      <input class="form-input" id="alert-email-to" type="email" placeholder="analyst@example.com" style="max-width:320px">
+    </div>
+  </div>
+</div>
+
+<!-- Edit API Key Modal -->
+<div class="modal-overlay" id="env-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Edit API Key — <span id="env-modal-key"></span></span>
+      <button class="modal-close" onclick="closeEnvModal()">×</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">New Value</label>
+      <input class="form-input w-full" id="env-modal-value" type="password" placeholder="Enter new key value…">
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-outline" onclick="closeEnvModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEnvKey()">Save</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/settings.js"></script>
+{% endblock %}
