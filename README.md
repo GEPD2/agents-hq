@@ -1,7 +1,7 @@
-# AGENTS-HQ — Autonomous Intelligence Platform
+# AGENTS-HQ Autonomous Intelligence Platform
 
 A modular, local-first security intelligence platform built around Ollama LLMs.
-All agents run fully on-device — no cloud AI, no telemetry, no external inference.
+All agents run fully on-device, no cloud AI, no telemetry, no external inference.
 Everything is bound to `127.0.0.1`. Nothing is exposed outside localhost.
 
 ---
@@ -111,7 +111,7 @@ The web UI is the primary interface for the platform. All agent runs, report vie
 | 09 | Market Intel | ✅ Built | 8769 | Daily 13:30 UTC (n8n cron) |
 | 10 | Dark Web Monitor | ✅ Built | 8770 | Every 12h (n8n cron) |
 
-### Agent-01 — OSINT Collector
+### Agent-01 OSINT Collector
 Maps the public attack surface of any target type:
 - **Domain** → WHOIS, DNS, crt.sh, subdomains, Wayback, reverse IP
 - **IP** → Shodan, GreyNoise, Censys, AbuseIPDB, ASN/BGP, ipinfo
@@ -124,16 +124,16 @@ Modes: `fast` (15 steps) | `deep` (25) | `adaptive` (30) | `insane` (60)
 
 Webhook: `POST http://127.0.0.1:8765/webhook/agent01`
 
-### Agent-02 — Task Recon
+### Agent-02 Task Recon
 Penetration testing: `nmap` → RAG lookup → ExploitDB → NVD → report.
 ReAct loop with tools: `shell`, `web_search`, `exploitdb`, `rag_lookup`, `file_write`.
 
-### Agent-03 — RAG Knowledge Base
+### Agent-03 RAG Knowledge Base
 Passive MySQL-backed store. Not a running process.
 All other agents write to it via `tools/rag_mysql.py` after each run.
 Queryable at `/kb` in the control panel.
 
-### Agent-04 — Master Orchestrator
+### Agent-04 Master Orchestrator
 Routes any input to the correct agent pipeline.
 
 | Input | Pipeline |
@@ -146,14 +146,14 @@ Routes any input to the correct agent pipeline.
 
 Webhook: `POST http://127.0.0.1:8764/webhook/agent04`
 
-### Agent-05 — Red Team
+### Agent-05 Red Team
 PTES methodology + MITRE ATT&CK framework.
 - **Advisory mode** (webhook): full attack surface analysis, kill chain, technique mapping.
 - **Active mode** (CLI only): ReAct loop with real execution — every action requires human approval (`yes`/`no` prompt, no bypass).
 
 Webhook: `POST http://127.0.0.1:8763/webhook/agent05` (advisory only)
 
-### Agent-06 — Ghidra RE
+### Agent-06 Ghidra RE
 Full binary reverse engineering pipeline:
 `binary_info` → `hash` → `VirusTotal` → `PE analysis` → `strings` → `IOC extract`
 → `Ghidra decompile` → `function map` → `YARA generate` → `RAG ingest`
@@ -161,7 +161,7 @@ Full binary reverse engineering pipeline:
 Requires Ghidra installed at `$GHIDRA_PATH` (auto-detects `/opt/ghidra`).
 Webhook: `POST http://127.0.0.1:8766/webhook/agent06`
 
-### Agent-07 — Crypto Analysis
+### Agent-07 Crypto Analysis
 - Hash identification + cracking (hashcat GPU / john CPU fallback)
 - TLS audit across all protocol versions, vuln checks (POODLE, BEAST, SWEET32…)
 - X.509 certificate chain analysis
@@ -169,19 +169,19 @@ Webhook: `POST http://127.0.0.1:8766/webhook/agent06`
 
 Webhook: `POST http://127.0.0.1:8767/webhook/agent07` (TLS/cert only — hash cracking requires CLI)
 
-### Agent-08 — News Intel
+### Agent-08 News Intel
 30+ sources across 5 intelligence tracks (CTI feeds, CISA KEV, NVD, GovCERT, GeoInt, Patents).
 Runs every 6 hours via n8n cron. Writes findings to MySQL RAG.
 
 Webhook: `POST http://127.0.0.1:8768/webhook/agent08` with `{"since": 6}`
 
-### Agent-09 — Market Intel
+### Agent-09 Market Intel
 Tracks cybersecurity stocks (CRWD, PANW, S, FTNT, CYBR…), generates RSI/MACD/BB signals,
 correlates market moves with threat activity from Agent-08 and Agent-10.
 
 Webhook: `POST http://127.0.0.1:8769/webhook/agent09`
 
-### Agent-10 — Dark Web Monitor
+### Agent-10 Dark Web Monitor
 Monitors `.onion` sites, paste sites, and leak forums via Tor.
 Extracts IOCs, builds threat actor profiles in MySQL, scores findings by severity.
 Supports Tor-proxied requests: `POST {"tor": true}`.
@@ -348,6 +348,6 @@ OS:      Parrot OS (Debian-based)
 CPU:     Intel i5 12th gen
 RAM:     16 GB DDR4
 GPU:     NVIDIA RTX 3050 Laptop 4 GB VRAM  (CUDA 12.4)
-Storage: 512 GB SSD + 1 TB HDD
+Storage: 512 GB SSD + 1 TB SSD
 Docker:  v5.1.0
 ```
