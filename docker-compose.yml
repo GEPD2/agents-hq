@@ -346,7 +346,7 @@ services:
     logging: *logging
     network_mode: host          # reach agents at localhost:8763-8770, MySQL at 3306
     volumes:
-      - ./reports:/agents-hq/reports:ro
+      - ./reports:/agents-hq/reports
       - ./agent_01_osint/.env:/agents-hq/agent_01_osint/.env
       - ./agent_09_market_intel:/agents-hq/agent_09_market_intel
       - ./agent_10_darkweb:/agents-hq/agent_10_darkweb

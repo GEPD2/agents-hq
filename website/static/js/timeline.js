@@ -8,7 +8,7 @@ const TL_LABELS = {
 };
 
 let _tlReports = [];
-let _tlZoom = "month";
+let _tlZoom = "all";
 
 function tlInit(reports) {
   _tlReports = reports.filter(r => r.created);
@@ -39,8 +39,12 @@ function renderTimeline(containerId, compact) {
     ? _tlReports.filter(r => new Date(r.created).getTime() >= since)
     : [..._tlReports];
 
+  if (!reports.length && _tlReports.length) {
+    // Zoom window is empty but data exists — fall back to all-time view
+    reports = [..._tlReports];
+  }
   if (!reports.length) {
-    container.innerHTML = '<div class="tl-empty">No reports in this time range</div>';
+    container.innerHTML = '<div class="tl-empty">No reports yet</div>';
     return;
   }
 
