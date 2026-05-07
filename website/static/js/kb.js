@@ -16,7 +16,7 @@ async function loadKbStats() {
 function renderCollectionList() {
   const el = document.getElementById("collections-list");
   if (!collections.length) {
-    el.innerHTML = '<div class="empty"><div class="empty-icon">🗄️</div>No ChromaDB collections found</div>';
+    el.innerHTML = '<div class="empty"><div class="empty-icon">🗄️</div>No MySQL collections found</div>';
     return;
   }
   el.innerHTML = collections.map(c => `

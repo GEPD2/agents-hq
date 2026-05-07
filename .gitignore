@@ -34,6 +34,10 @@ agent_06_ghidra/ghidra_projects/
 *.tar
 *.tar.gz
 
+# ── Internal planning docs — not for public repo ──────────────
+UPDATES.md
+WEBSITE_PLAN.md
+
 # ── OS noise ──────────────────────────────────────────────────
 .DS_Store
 Thumbs.db

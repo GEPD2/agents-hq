@@ -37,7 +37,7 @@ AGENTS: dict[str, dict] = {
         "script": None,
         "webhook_path": None,
         "type": "kb",
-        "description": "ChromaDB vector store — not a process",
+        "description": "MySQL relational store — not a process",
         "params": [],
         "schedules": [],
     },
@@ -193,7 +193,7 @@ async def platform_status() -> dict:
     agents_health = await check_all_agents()
     return {
         "ollama": ollama,
-        "chromadb": mysql,
+        "mysql": mysql,
         "n8n": n8n,
         "tor": tor,
         "agents": agents_health,

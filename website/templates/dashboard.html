@@ -16,7 +16,7 @@
     <span class="label">Ollama</span>
   </div>
   <div class="health-item">
-    <span class="status-dot" id="hb-chromadb"></span>
+    <span class="status-dot" id="hb-mysql"></span>
     <span class="label">MySQL</span>
   </div>
   <div class="health-item">
@@ -111,7 +111,7 @@
 <script>
 // Mirror health bar dots on this page too
 (function() {
-  const mirror = { "ollama":"hb-ollama", "chromadb":"hb-chromadb", "n8n":"hb-n8n", "tor":"hb-tor" };
+  const mirror = { "ollama":"hb-ollama", "mysql":"hb-mysql", "n8n":"hb-n8n", "tor":"hb-tor" };
   const origFetch = fetchStatus;
   const _orig = window.fetchStatus;
   const _interval = setInterval(async () => {

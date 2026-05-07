@@ -21,7 +21,7 @@ async function fetchStatus() {
 }
 
 function updateHealthBar(data) {
-  const services = ["ollama", "chromadb", "n8n", "tor"];
+  const services = ["ollama", "mysql", "n8n", "tor"];
   services.forEach(s => {
     const dot = document.getElementById(`health-${s}`);
     if (dot) dot.className = "status-dot " + (data[s] ? "online" : "");

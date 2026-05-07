@@ -58,7 +58,7 @@
         <span>Ollama</span>
       </div>
       <div class="status-row">
-        <span class="status-dot" id="health-chromadb"></span>
+        <span class="status-dot" id="health-mysql"></span>
         <span>MySQL</span>
       </div>
       <div class="status-row">
@@ -105,7 +105,7 @@
     try {
       const r = await fetch("/api/status");
       const data = await r.json();
-      ["ollama","chromadb","n8n","tor"].forEach(s => {
+      ["ollama","mysql","n8n","tor"].forEach(s => {
         const dot = document.getElementById(`health-${s}`);
         if (dot) dot.className = "status-dot " + (data[s] ? "online" : "");
       });
