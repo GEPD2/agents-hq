@@ -114,7 +114,11 @@ async def _spawn_subprocess(agent_id: str, agent: dict, params: dict, job_id: st
     if not script:
         raise ValueError(f"No script for agent {agent_id}")
 
-    script_path = Path(AGENTS_BASE_DIR) / script
+    base_dir = Path(AGENTS_BASE_DIR).resolve()
+    script_path = (base_dir / script).resolve()
+    if base_dir not in script_path.parents:
+        raise ValueError(f"Invalid script path for agent {agent_id}")
+
     cmd = ["python3", str(script_path)]
 
     target = params.get("target", "")
@@ -123,7 +127,10 @@ async def _spawn_subprocess(agent_id: str, agent: dict, params: dict, job_id: st
 
     since = params.get("since")
     if since is not None:
-        cmd += ["--since", str(int(since))]
+        since_int = int(since)
+        if since_int < 0 or since_int > 24 * 365:
+            raise ValueError("since is out of allowed range")
+        cmd += ["--since", str(since_int)]
 
     q: asyncio.Queue = asyncio.Queue()
 
