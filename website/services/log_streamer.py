@@ -1,4 +1,5 @@
 import asyncio
+import re
 import subprocess
 import time
 import uuid
@@ -9,6 +10,20 @@ from typing import AsyncGenerator
 from services.agent_monitor import AGENTS, AGENTS_BASE_DIR, set_running, clear_running
 
 REPORTS_DIR = Path(os.environ.get("REPORTS_DIR", "/agents-hq/reports"))
+
+_SAFE_ARG_RE = re.compile(r'^[A-Za-z0-9 ./:_@?=&%+,\-\[\]{}#!*]+$')
+_ARG_MAX_LEN = 512
+
+
+def _validate_subprocess_arg(value: str, name: str) -> str:
+    """Allowlist-validate a user-supplied string before it enters a subprocess command."""
+    if len(value) > _ARG_MAX_LEN:
+        raise ValueError(f"{name} exceeds {_ARG_MAX_LEN} characters")
+    if any(c in value for c in ("\x00", "\n", "\r")):
+        raise ValueError(f"{name} contains invalid characters")
+    if not _SAFE_ARG_RE.match(value):
+        raise ValueError(f"{name} contains disallowed characters")
+    return value
 
 
 def _find_new_report(since_ts: float) -> str | None:
@@ -104,10 +119,7 @@ async def _spawn_subprocess(agent_id: str, agent: dict, params: dict, job_id: st
 
     target = params.get("target", "")
     if target:
-        # Reject null bytes / newlines defensively; validation also happens at the router layer.
-        if any(c in target for c in ("\x00", "\n", "\r")):
-            raise ValueError("target contains invalid characters")
-        cmd += ["--target", target]
+        cmd += ["--target", _validate_subprocess_arg(target, "target")]
 
     since = params.get("since")
     if since is not None:
