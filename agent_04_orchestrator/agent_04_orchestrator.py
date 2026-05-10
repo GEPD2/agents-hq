@@ -67,6 +67,23 @@ def strip_ansi(text: str) -> str:
     return ANSI_RE.sub('', text)
 
 
+# ── Input Validation ───────────────────────────────────────────
+_SAFE_TARGET_RE = re.compile(r'^[A-Za-z0-9 ./:_@?=&%+,\-\[\]{}#!*]+$')
+_TARGET_MAX_LEN = 512
+
+def validate_target(target: str) -> str:
+    t = target.strip()
+    if not t:
+        raise ValueError("target is empty")
+    if len(t) > _TARGET_MAX_LEN:
+        raise ValueError(f"target exceeds {_TARGET_MAX_LEN} characters")
+    if any(c in t for c in ("\x00", "\n", "\r")):
+        raise ValueError("target contains invalid characters")
+    if not _SAFE_TARGET_RE.match(t):
+        raise ValueError(f"target contains disallowed characters: {t!r}")
+    return t
+
+
 # ── Python Finder ──────────────────────────────────────────────
 def find_python(agent_dir: Path, fallback_dir: Path = None) -> str:
     """Return the venv Python for an agent, or fall back to system Python."""
@@ -247,6 +264,7 @@ def write_master_report(target: str, target_type: str, mode: str,
 
 # ── Pipeline Router ────────────────────────────────────────────
 def run_pipeline(target: str, target_type: str, mode: str) -> str:
+    target = validate_target(target)
     ts       = datetime.now().strftime('%Y%m%d_%H%M%S')
     pipeline: list[dict] = []
     findings = {"ips": [], "cves": [], "domains": [], "hashes": {}}
@@ -487,11 +505,9 @@ def run_webhook_server():
                 body = self.rfile.read(int(self.headers.get("Content-Length", 0)))
                 try:
                     data   = json.loads(body)
-                    target = data.get("target", "").strip()
+                    target = validate_target(data.get("target", ""))
                     mode   = data.get("mode", "auto")
                     ttype  = data.get("type") or detect_type(target)
-                    if not target:
-                        raise ValueError("'target' field required")
                     if mode not in ("fast", "deep", "auto"):
                         mode = "auto"
                     cprint(C_HEAD,
