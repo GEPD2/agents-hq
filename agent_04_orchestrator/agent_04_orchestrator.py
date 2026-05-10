@@ -69,6 +69,7 @@ def strip_ansi(text: str) -> str:
 
 # ── Input Validation ───────────────────────────────────────────
 _SAFE_TARGET_RE = re.compile(r'^[A-Za-z0-9 ./:_@?=&%+,\-\[\]{}#!*]+$')
+_SAFE_CLI_ARG_RE = re.compile(r'^[A-Za-z0-9 .,:/_@?=&%+\-\[\]{}#!*]+$')
 _TARGET_MAX_LEN = 512
 
 def validate_target(target: str) -> str:
@@ -82,6 +83,19 @@ def validate_target(target: str) -> str:
     if not _SAFE_TARGET_RE.match(t):
         raise ValueError(f"target contains disallowed characters: {t!r}")
     return t
+
+
+def validate_cli_arg(value: str) -> str:
+    v = str(value).strip()
+    if not v:
+        raise ValueError("command argument is empty")
+    if len(v) > _TARGET_MAX_LEN:
+        raise ValueError(f"command argument exceeds {_TARGET_MAX_LEN} characters")
+    if any(c in v for c in ("\x00", "\n", "\r")):
+        raise ValueError("command argument contains invalid characters")
+    if not _SAFE_CLI_ARG_RE.match(v):
+        raise ValueError(f"command argument contains disallowed characters: {v!r}")
+    return v
 
 
 # ── Python Finder ──────────────────────────────────────────────
@@ -125,20 +139,32 @@ def detect_type(target: str) -> str:
 # ── Agent Runner ───────────────────────────────────────────────
 def run_agent(label: str, cmd: list, cwd: Path,
               timeout: int = AGENT_TIMEOUT) -> tuple[bool, str]:
+    if len(cmd) < 2:
+        raise ValueError("invalid command: expected interpreter and script path")
+
+    script_path = Path(str(cmd[1])).resolve()
+    allowed_roots = (A01_DIR.resolve(), A02_DIR.resolve(), A03_DIR.resolve(), A06_DIR.resolve())
+    if not any(str(script_path).startswith(str(root) + os.sep) or script_path == root for root in allowed_roots):
+        raise ValueError(f"script path is outside allowed agent directories: {script_path}")
+
+    safe_cmd = [str(cmd[0]), str(script_path)]
+    for arg in cmd[2:]:
+        safe_cmd.append(validate_cli_arg(str(arg)))
+
     bar = "─" * max(1, 56 - len(label))
     cprint(C_AGENT, f"\n  ┌─ {label} {bar}")
-    cprint(C_AGENT, f"  │  {' '.join(str(c) for c in cmd)}")
+    cprint(C_AGENT, f"  │  {' '.join(safe_cmd)}")
     cprint(C_AGENT, f"  └{'─'*59}")
 
-    if not Path(cmd[1]).exists():
-        cprint(C_WARN, f"  [!] Script not found: {cmd[1]} — skipping")
-        return False, f"[SKIP] {cmd[1]} not found"
+    if not script_path.exists():
+        cprint(C_WARN, f"  [!] Script not found: {script_path} — skipping")
+        return False, f"[SKIP] {script_path} not found"
 
     output_lines: list[str] = []
 
     try:
         proc = subprocess.Popen(
-            [str(c) for c in cmd],
+            safe_cmd,
             cwd=str(cwd),
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
@@ -427,10 +453,11 @@ def run_pipeline(target: str, target_type: str, mode: str) -> str:
         )
         # Task agent for NVD lookup regardless of mode
         t0 = time.time()
+        safe_target = validate_cli_arg(target)
         ok, out = run_agent(
             "Agent-02 Task (NVD)",
             [a02_py, A02_SCRIPT,
-             f"Search NVD and provide full details for {target}: "
+             f"Search NVD and provide full details for {safe_target}: "
              f"CVSS score, affected products, available PoC exploits."],
             A02_DIR,
         )
