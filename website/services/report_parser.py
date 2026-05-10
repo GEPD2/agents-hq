@@ -87,18 +87,29 @@ def list_reports() -> list[dict]:
     return reports
 
 
+def _safe_report_path(filename: str) -> Path | None:
+    """Return the resolved path only if it is a .md file inside REPORTS_DIR."""
+    name = Path(filename).name
+    if not name.lower().endswith(".md"):
+        return None
+    resolved = (REPORTS_DIR / name).resolve()
+    try:
+        resolved.relative_to(REPORTS_DIR.resolve())
+    except ValueError:
+        return None
+    return resolved
+
+
 def read_report(filename: str) -> str | None:
-    safe = Path(filename).name  # strip any path traversal
-    path = REPORTS_DIR / safe
-    if not path.exists():
+    path = _safe_report_path(filename)
+    if path is None or not path.exists():
         return None
     return path.read_text(encoding="utf-8", errors="replace")
 
 
 def delete_report(filename: str) -> bool:
-    safe = Path(filename).name
-    path = REPORTS_DIR / safe
-    if not path.exists():
+    path = _safe_report_path(filename)
+    if path is None or not path.exists():
         return False
     path.unlink()
     return True
