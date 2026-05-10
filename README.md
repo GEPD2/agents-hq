@@ -45,7 +45,7 @@ cp .env.example .env
 ### 3. Build and start
 
 ```bash
-cd ~/Desktop/programming_environment/agents-hq
+cd ~/agents-hq
 docker compose up --build -d
 ```
 
