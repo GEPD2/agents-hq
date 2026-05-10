@@ -1,6 +1,8 @@
+import re
+
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from typing import Optional
 
 from services.agent_monitor import AGENTS, check_agent_health, check_all_agents, platform_status, get_run_info
@@ -8,12 +10,31 @@ from services.log_streamer import spawn_agent, stream_job, stream_docker_logs
 
 router = APIRouter()
 
+# Allowlist: printable ASCII minus shell metacharacters that have no
+# legitimate use in a scan target (IP, domain, URL, file path, keyword).
+_TARGET_RE = re.compile(r'^[A-Za-z0-9 ./:_@?=&%+,\-\[\]{}#!*]+$')
+_TARGET_MAX_LEN = 512
+
 
 class RunParams(BaseModel):
     target: Optional[str] = None
     mode: Optional[str] = "adaptive"
     since: Optional[int] = 6
     tor: Optional[bool] = False
+
+    @field_validator("target")
+    @classmethod
+    def validate_target(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        v = v.strip()
+        if len(v) > _TARGET_MAX_LEN:
+            raise ValueError(f"target must be ≤ {_TARGET_MAX_LEN} characters")
+        if "\x00" in v or "\n" in v or "\r" in v:
+            raise ValueError("target contains invalid characters")
+        if v and not _TARGET_RE.match(v):
+            raise ValueError("target contains disallowed characters")
+        return v
 
 
 @router.get("/status")

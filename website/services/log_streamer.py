@@ -104,11 +104,14 @@ async def _spawn_subprocess(agent_id: str, agent: dict, params: dict, job_id: st
 
     target = params.get("target", "")
     if target:
+        # Reject null bytes / newlines defensively; validation also happens at the router layer.
+        if any(c in target for c in ("\x00", "\n", "\r")):
+            raise ValueError("target contains invalid characters")
         cmd += ["--target", target]
 
     since = params.get("since")
-    if since:
-        cmd += ["--since", str(since)]
+    if since is not None:
+        cmd += ["--since", str(int(since))]
 
     q: asyncio.Queue = asyncio.Queue()
 
