@@ -3,7 +3,7 @@
 AGENTS-HQ - Agent-02 Task Agent v4
 ReAct loop with live thinking display + robust parser
 
-Model:  deepseek-r1:8b
+Model:  qwen2.5:14b
 Tools:  shell | web_search (NVD) | exploitdb | rag_lookup | file_write | python_exec
 
 Fixes in v4:
@@ -34,7 +34,7 @@ from pathlib import Path
 # ── Config ────────────────────────────────────────────────────
 OLLAMA_HOST    = "localhost"
 OLLAMA_PORT    = 11434
-AGENT_MODEL    = "deepseek-r1:8b"
+AGENT_MODEL    = "qwen2.5:14b"
 MAX_ITERATIONS = 20
 REPORTS_DIR    = Path(__file__).parent.parent / "reports"
 TIMEOUT_SHELL  = 120

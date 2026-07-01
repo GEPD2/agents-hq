@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Market × Security{% endblock %}
+{% block nav_market %}active{% endblock %}
+{% block breadcrumb %}Market × Security{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title">Market × Security Correlation</div>
+  <div class="page-sub">Security-sector stock prices against security-event activity</div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header" style="flex-wrap:wrap;gap:8px">
+    <input type="text" id="market-tickers" class="input-sm" value="CRWD,PANW,S" style="width:180px" placeholder="CRWD,PANW,S">
+    <select id="market-days" class="input-sm">
+      <option value="30">30d</option>
+      <option value="90" selected>90d</option>
+      <option value="180">180d</option>
+      <option value="365">1y</option>
+    </select>
+    <button class="btn btn-primary btn-sm" onclick="loadCorrelation()">Update</button>
+    <span class="text-muted" id="market-status" style="margin-left:auto;font-size:12px"></span>
+  </div>
+  <div style="padding:16px;height:420px">
+    <canvas id="market-chart"></canvas>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span>Security Events</span></div>
+  <table class="table" style="width:100%">
+    <thead><tr><th>Date</th><th>Type</th><th>Detail</th></tr></thead>
+    <tbody id="market-events-tbody">
+      <tr><td colspan="3" style="text-align:center;padding:24px;color:var(--muted)"><span class="spinner"></span></td></tr>
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/market_intel.js"></script>
+{% endblock %}

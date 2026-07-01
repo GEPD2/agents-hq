@@ -12,7 +12,7 @@ Everything is bound to `127.0.0.1`. Nothing is exposed outside localhost.
 |-----------|-----------|------|
 | Control Panel | FastAPI + Jinja2 + vanilla JS | 8080 |
 | Database | MySQL 8.4 (reports, IOCs, KB, threat actors) | 3306 |
-| LLM | Ollama (deepseek-r1:8b) | 11434 |
+| LLM | Ollama (qwen2.5:14b) | 11434 |
 | Workflow | n8n | 5678 |
 | Proxy | nginx (routes Docker → Ollama on host) | — |
 | Tor | osminogin/tor-simple | 9050 |
@@ -25,11 +25,11 @@ Everything is bound to `127.0.0.1`. Nothing is exposed outside localhost.
 ### 1. Prerequisites
 
 - Docker + Docker Compose
-- Ollama running on the host with `deepseek-r1:8b` pulled
+- Ollama running on the host with `qwen2.5:14b` pulled
 - (Optional) Ghidra installed if using Agent-06
 
 ```bash
-ollama pull deepseek-r1:8b
+ollama pull qwen2.5:14b
 ```
 
 ### 2. Configure credentials
@@ -93,6 +93,11 @@ The web UI is the primary interface for the platform. All agent runs, report vie
 | Timeline | `/timeline` | Chronological dot-plot of all reports by agent with zoom controls |
 | IOC Explorer | `/iocs` | All extracted IOCs from all reports, filterable by type |
 | Pivot | `/pivot/{type}/{value}` | Cross-report correlation for any IOC value |
+| Batch OSINT | `/batch` | Run Agent-01 sequentially over a target list, live progress and summary report |
+| Market x Security | `/market-intel` | Live security-sector stock prices against security-event activity (dual-axis) |
+| Case Files | `/cases`, `/cases/{id}` | Group intel into investigations, Ollama auto-brief, ZIP export |
+| Geo Map | `/map` | IP indicators plotted on a Leaflet map, top-countries sidebar |
+| Intelligence Graph | `/graph` | Cytoscape link analysis of IOCs, co-occurrence edges, PNG export |
 
 ---
 
@@ -251,9 +256,9 @@ agents-hq/
 ├── website/                     FastAPI control panel
 │   ├── main.py
 │   ├── Dockerfile
-│   ├── routers/                 agents, reports, kb, settings, iocs
-│   ├── services/                agent_monitor, alerter, ioc_store, mysql_client, report_parser, log_streamer
-│   ├── templates/               Jinja2 HTML (base, dashboard, agents, reports, kb, threat_actors, settings, timeline, iocs, pivot)
+│   ├── routers/                 agents, reports, kb, settings, iocs, batch, market, cases, map_router, graph_router
+│   ├── services/                agent_monitor, alerter, ioc_store, mysql_client, report_parser, log_streamer, batch_runner, market_correlator, case_store, case_exporter, geo_store, graph_builder, ollama
+│   ├── templates/               Jinja2 HTML (base, dashboard, agents, reports, kb, threat_actors, settings, timeline, iocs, pivot, batch, market_intel, cases, case_detail, map_view, graph)
 │   └── static/                  CSS + JS (no build step, no Node.js)
 │
 ├── runtime/
@@ -280,6 +285,7 @@ All keys live in `agent_01_osint/.env` (gitignored). Use the Settings page at
 | `INTELX_API_KEY` | IntelligenceX | Yes |
 | `HIBP_API_KEY` | Have I Been Pwned | Paid |
 | `VT_API_KEY` | VirusTotal | Yes |
+| `IPINFO_TOKEN` | ipinfo.io (Geo Map IP geolocation) | Yes |
 | `SHODAN_API_KEY` | Shodan | Paid |
 | `GREYNOISE_API_KEY` | GreyNoise | Yes |
 | `CENSYS_ID` / `CENSYS_SECRET` | Censys | Yes |

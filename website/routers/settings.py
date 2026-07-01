@@ -116,7 +116,7 @@ def _write_onion_targets(data: dict) -> None:
     AGENT10_FILE.write_text(content)
 
 
-# ── Routes ────────────────────────────────────────────────────────────────────
+# Routes
 
 class EnvKeyBody(BaseModel):
     key: str

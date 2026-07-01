@@ -41,7 +41,7 @@ import email.utils
 # ── Config ─────────────────────────────────────────────────────
 OLLAMA_HOST           = "localhost"
 OLLAMA_PORT           = 11434
-AGENT_MODEL           = "deepseek-r1:8b"
+AGENT_MODEL           = "qwen2.5:14b"
 CHROMA_HOST           = "localhost"
 CHROMA_PORT           = 8000
 REPORTS_DIR           = Path(__file__).parent.parent / "reports"

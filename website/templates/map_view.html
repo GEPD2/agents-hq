@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Geo Map{% endblock %}
+{% block nav_map %}active{% endblock %}
+{% block breadcrumb %}Geo Map{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title">Geolocation Map</div>
+  <div class="page-sub">IP indicators plotted across all reports · <span id="map-status" class="text-muted"></span></div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 260px;gap:16px">
+  <div class="card" style="padding:0;overflow:hidden">
+    <div id="geo-map" style="height:560px;width:100%;background:var(--surface)"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><span>Top Countries</span></div>
+    <table class="table" style="width:100%">
+      <tbody id="country-tbody">
+        <tr><td colspan="2" style="text-align:center;padding:16px;color:var(--muted)"><span class="spinner"></span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/map_view.js"></script>
+{% endblock %}

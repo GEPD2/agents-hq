@@ -8,7 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 
-from routers import agents, reports, kb, settings as settings_router, iocs as iocs_router
+from routers import agents, reports, kb, settings as settings_router, iocs as iocs_router, batch as batch_router, market as market_router, cases as cases_router, map_router, graph_router
 
 BASE_DIR = Path(__file__).parent
 
@@ -39,6 +39,11 @@ app.include_router(reports.router, prefix="/api")
 app.include_router(kb.router, prefix="/api")
 app.include_router(settings_router.router, prefix="/api")
 app.include_router(iocs_router.router, prefix="/api")
+app.include_router(batch_router.router, prefix="/api")
+app.include_router(market_router.router, prefix="/api")
+app.include_router(cases_router.router, prefix="/api")
+app.include_router(map_router.router, prefix="/api")
+app.include_router(graph_router.router, prefix="/api")
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -84,6 +89,36 @@ async def timeline_page(request: Request):
 @app.get("/iocs", response_class=HTMLResponse)
 async def iocs_page(request: Request):
     return templates.TemplateResponse("iocs.html", {"request": request})
+
+
+@app.get("/batch", response_class=HTMLResponse)
+async def batch_page(request: Request):
+    return templates.TemplateResponse("batch.html", {"request": request})
+
+
+@app.get("/market-intel", response_class=HTMLResponse)
+async def market_intel_page(request: Request):
+    return templates.TemplateResponse("market_intel.html", {"request": request})
+
+
+@app.get("/graph", response_class=HTMLResponse)
+async def graph_page(request: Request):
+    return templates.TemplateResponse("graph.html", {"request": request})
+
+
+@app.get("/map", response_class=HTMLResponse)
+async def map_page(request: Request):
+    return templates.TemplateResponse("map_view.html", {"request": request})
+
+
+@app.get("/cases", response_class=HTMLResponse)
+async def cases_page(request: Request):
+    return templates.TemplateResponse("cases.html", {"request": request})
+
+
+@app.get("/cases/{case_id}", response_class=HTMLResponse)
+async def case_detail_page(request: Request, case_id: str):
+    return templates.TemplateResponse("case_detail.html", {"request": request, "case_id": case_id})
 
 
 @app.get("/pivot/{ioc_type}/{value:path}", response_class=HTMLResponse)

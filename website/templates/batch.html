@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Batch OSINT{% endblock %}
+{% block nav_batch %}active{% endblock %}
+{% block breadcrumb %}Batch OSINT{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title">Batch OSINT</div>
+  <div class="page-sub">Run Agent-01 sequentially across a list of targets</div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header">
+    <span>Targets</span>
+    <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+      <select id="batch-mode" class="input-sm">
+        <option value="adaptive">adaptive</option>
+        <option value="fast">fast</option>
+        <option value="deep">deep</option>
+      </select>
+      <input type="file" id="batch-file" accept=".txt" style="display:none" onchange="loadFile(event)">
+      <button class="btn btn-outline btn-sm" onclick="document.getElementById('batch-file').click()">Upload .txt</button>
+      <button class="btn btn-primary btn-sm" id="btn-batch-start" onclick="startBatch()">Start Batch</button>
+    </div>
+  </div>
+  <div style="padding:12px">
+    <textarea id="batch-targets" rows="6" placeholder="One target per line (domain, IP, email)"
+      style="width:100%;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:10px;font-family:monospace;font-size:12px;resize:vertical"></textarea>
+  </div>
+</div>
+
+<div class="card mb-4" id="batch-progress-card" style="display:none">
+  <div class="card-header">
+    <span>Progress</span>
+    <span id="batch-progress-label" class="text-muted" style="margin-left:auto;font-size:12px">0 / 0</span>
+  </div>
+  <div style="padding:12px">
+    <div class="batch-progress-track"><div class="batch-progress-fill" id="batch-progress-fill"></div></div>
+    <table class="table" style="width:100%;margin-top:12px">
+      <thead><tr><th>#</th><th>Target</th><th>Status</th><th>Report</th></tr></thead>
+      <tbody id="batch-results-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card" id="batch-log-card" style="display:none">
+  <div class="card-header"><span>Live Log</span></div>
+  <div class="log-pane" id="batch-log" style="height:280px"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/batch.js"></script>
+{% endblock %}

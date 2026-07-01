@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Case{% endblock %}
+{% block nav_cases %}active{% endblock %}
+{% block breadcrumb %}Case Files{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title" id="case-title">Case</div>
+  <div class="page-sub" id="case-desc-view"></div>
+</div>
+
+<div style="display:flex;gap:8px;margin-bottom:16px">
+  <a href="/cases" class="btn btn-outline btn-sm">← All Cases</a>
+  <button class="btn btn-primary btn-sm" id="btn-brief" onclick="generateBrief()">Generate Brief</button>
+  <button class="btn btn-outline btn-sm" onclick="exportCase()">Export ZIP</button>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header"><span>Add Item</span></div>
+  <div style="padding:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+    <select id="item-type" class="input-sm">
+      <option value="report">Report</option>
+      <option value="ioc">IOC</option>
+      <option value="threat_actor">Threat Actor</option>
+    </select>
+    <input type="text" id="item-ref" class="input-sm" list="report-list" placeholder="reference (filename / value / id)" style="width:280px">
+    <datalist id="report-list"></datalist>
+    <input type="text" id="item-label" class="input-sm" placeholder="label (optional)" style="width:160px">
+    <button class="btn btn-primary btn-sm" onclick="addItem()">Add</button>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header"><span>Linked Items</span></div>
+  <table class="table" style="width:100%">
+    <thead><tr><th>Type</th><th>Reference</th><th>Label</th><th></th></tr></thead>
+    <tbody id="items-tbody"></tbody>
+  </table>
+</div>
+
+<div class="card">
+  <div class="card-header"><span>Consolidated Brief</span></div>
+  <div id="brief-view" style="padding:16px;white-space:pre-wrap;font-size:12px;line-height:1.6;color:var(--text)">
+    <span class="text-muted">No brief yet — click Generate Brief.</span>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>window.CASE_ID = "{{ case_id }}";</script>
+<script src="/static/js/case_detail.js"></script>
+{% endblock %}
