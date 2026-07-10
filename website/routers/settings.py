@@ -43,6 +43,12 @@ def _read_env() -> dict:
 def _write_env_key(key: str, value: str) -> None:
     if key not in ENV_KEYS:
         raise ValueError(f"Key {key} not in allowed list")
+    # Reject characters that could break out of the KEY="value" line and inject
+    # additional env vars (loaded verbatim into agent subprocess environments).
+    if any(c in value for c in ('\n', '\r', '\x00', '"')):
+        raise ValueError("value contains invalid characters")
+    if len(value) > 1024:
+        raise ValueError("value too long")
     if not ENV_FILE.exists():
         ENV_FILE.parent.mkdir(parents=True, exist_ok=True)
         ENV_FILE.touch()
@@ -76,11 +82,10 @@ def _write_watchlist(data: dict) -> None:
     if not AGENT09_FILE.exists():
         raise FileNotFoundError("Agent-09 script not found")
     content = AGENT09_FILE.read_text()
-    import json
     new_block = "WATCHLIST_BY_SECTOR = " + repr(data)
     content = re.sub(
         r'WATCHLIST_BY_SECTOR\s*=\s*\{[^}]+\}',
-        new_block,
+        lambda _m: new_block,
         content,
         flags=re.DOTALL,
     )
@@ -100,16 +105,32 @@ def _read_onion_targets() -> dict:
         return {}
 
 
+_ONION_KEY_RE = re.compile(r'^[A-Za-z0-9_\-]{1,64}$')
+_ONION_VAL_RE = re.compile(r'^[A-Za-z0-9._~:/?#\[\]@!$&\'()*+,;=%\-]{1,256}$')
+
+
 def _write_onion_targets(data: dict) -> None:
     if not AGENT10_FILE.exists():
         raise FileNotFoundError("Agent-10 script not found")
-    content = AGENT10_FILE.read_text()
-    lines = [f'    "{k}": "{v}",' for k, v in data.items()]
+    # This dict is written back into agent_10's Python source and later executed,
+    # so every key/value must be validated and emitted as an escaped literal.
+    # Raw interpolation here would be a code-injection sink.
+    import json
+    clean: dict[str, str] = {}
+    for k, v in data.items():
+        k, v = str(k), str(v)
+        if not _ONION_KEY_RE.match(k):
+            raise ValueError(f"invalid target name: {k!r}")
+        if not _ONION_VAL_RE.match(v):
+            raise ValueError(f"invalid target value for {k!r}")
+        clean[k] = v
+    lines = [f"    {json.dumps(k)}: {json.dumps(v)}," for k, v in clean.items()]
     inner = "\n".join(lines)
     new_block = f'ONION_TARGETS: dict[str, str] = {{\n{inner}\n}}'
+    content = AGENT10_FILE.read_text()
     content = re.sub(
         r'ONION_TARGETS\s*:\s*dict\[str,\s*str\]\s*=\s*\{[^}]*\}',
-        new_block,
+        lambda _m: new_block,
         content,
         flags=re.DOTALL,
     )
