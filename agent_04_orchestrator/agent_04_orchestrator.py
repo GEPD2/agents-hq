@@ -85,6 +85,52 @@ def validate_target(target: str) -> str:
     return t
 
 
+def sanitize_target_for_type(target: str, target_type: str) -> str:
+    """Constrain a validated target to the canonical form of its semantic type.
+
+    Defence in depth: validate_target only enforces a broad safe-character set.
+    Before a target reaches a subprocess argument, narrow it to the exact shape
+    expected for its detected type. Type names match detect_type()'s vocabulary
+    (ip, hash_md5/sha1/sha256, cve, email, phone, domain, file, company).
+    """
+    t = validate_target(target)
+    tt = (target_type or "").strip().lower()
+
+    if tt == "ip":
+        if not re.fullmatch(r"[A-Fa-f0-9:.]+", t):
+            raise ValueError(f"invalid ip target: {t!r}")
+        return t
+
+    if tt == "domain":
+        if not re.fullmatch(r"[A-Za-z0-9.-]+", t):
+            raise ValueError(f"invalid domain target: {t!r}")
+        return t
+
+    if tt == "email":
+        if not re.fullmatch(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", t):
+            raise ValueError(f"invalid email target: {t!r}")
+        return t
+
+    if tt == "phone":
+        if not re.fullmatch(r"\+?[0-9()\-.\s]{3,32}", t):
+            raise ValueError(f"invalid phone target: {t!r}")
+        return t
+
+    if tt.startswith("hash"):
+        if not re.fullmatch(r"[A-Fa-f0-9]{32}|[A-Fa-f0-9]{40}|[A-Fa-f0-9]{64}", t):
+            raise ValueError(f"invalid hash target: {t!r}")
+        return t
+
+    if tt == "cve":
+        if not re.fullmatch(r"CVE-\d{4}-\d{4,7}", t, flags=re.IGNORECASE):
+            raise ValueError(f"invalid cve target: {t!r}")
+        return t.upper()
+
+    # file / company / free-text fallback: already constrained by validate_target,
+    # and each subprocess arg is re-checked by validate_cli_arg at the call site.
+    return t
+
+
 def validate_cli_arg(value: str) -> str:
     v = str(value).strip()
     if not v:
@@ -291,6 +337,8 @@ def write_master_report(target: str, target_type: str, mode: str,
 # ── Pipeline Router ────────────────────────────────────────────
 def run_pipeline(target: str, target_type: str, mode: str) -> str:
     target = validate_target(target)
+    target_type = target_type or detect_type(target)
+    target = sanitize_target_for_type(target, target_type)
     ts       = datetime.now().strftime('%Y%m%d_%H%M%S')
     pipeline: list[dict] = []
     findings = {"ips": [], "cves": [], "domains": [], "hashes": {}}
