@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign in AGENTS-HQ</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <script>
+    try { var t = localStorage.getItem('ahq-theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="/static/css/tokens.css">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body style="height:100%;overflow:auto">
+  <div style="min-height:100%;display:flex;align-items:center;justify-content:center;padding:24px">
+    <div class="card" style="width:340px;max-width:100%">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+        <div style="width:32px;height:32px;border-radius:6px;background:linear-gradient(135deg,var(--accent),var(--accent-hover));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700">AH</div>
+        <div>
+          <div style="font-size:13px;font-weight:600;letter-spacing:0.04em">AGENTS-HQ</div>
+          <div style="font-size:10px;color:var(--muted);letter-spacing:0.1em">CONTROL PANEL</div>
+        </div>
+      </div>
+      <form method="post" action="/login">
+        <label class="form-label" for="username">Username</label>
+        <input class="form-input w-full" type="text" id="username" name="username" autocomplete="username" autofocus>
+        <label class="form-label" for="password" style="margin-top:12px">Password</label>
+        <input class="form-input w-full" type="password" id="password" name="password" autocomplete="current-password">
+        {% if error %}<div class="text-critical" style="font-size:11px;margin-top:8px">{{ error }}</div>{% endif %}
+        <button class="btn btn-primary w-full" type="submit" style="justify-content:center;margin-top:16px">Sign in</button>
+      </form>
+      <div class="text-muted" style="font-size:10px;margin-top:14px;line-height:1.5">First login uses the default account from the README. You will be required to set a new password immediately after signing in.</div>
+    </div>
+  </div>
+</body>
+</html>

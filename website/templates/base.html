@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}AGENTS-HQ{% endblock %} Control Panel</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <script>
+    // Set theme before stylesheets to avoid a flash of the wrong theme.
+    try {
+      var t = localStorage.getItem('ahq-theme');
+      if (t) document.documentElement.setAttribute('data-theme', t);
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="/static/css/tokens.css">
+  <link rel="stylesheet" href="/static/css/style.css">
+  {% block head %}{% endblock %}
+</head>
+<body>
+
+<!-- Icon sprite, currentColor -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <g id="i-dashboard" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></g>
+    <g id="i-agents" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="7" width="14" height="12" rx="2"/><path d="M9 7V4h6v3M9 12h.01M15 12h.01M12 2v2"/></g>
+    <g id="i-reports" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></g>
+    <g id="i-kb" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="7" ry="3"/><path d="M5 5v6c0 1.7 3.1 3 7 3s7-1.3 7-3V5M5 11v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/></g>
+    <g id="i-ta" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="8" r="4"/><path d="M3 20c0-3.3 3.1-6 7-6 1.3 0 2.5.3 3.5.8"/><circle cx="17.5" cy="16.5" r="3"/><path d="M22 21l-2.1-2.1"/></g>
+    <g id="i-iocs" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12a3 3 0 0 1 3-3h3a3 3 0 0 1 0 6h-1"/><path d="M15 12a3 3 0 0 1-3 3H9a3 3 0 0 1 0-6h1"/></g>
+    <g id="i-timeline" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-6 4 14 2-8h6"/></g>
+    <g id="i-batch" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 4.5-9 4.5-9-4.5z"/><path d="M3 12l9 4.5 9-4.5M3 16.5l9 4.5 9-4.5"/></g>
+    <g id="i-market" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></g>
+    <g id="i-cases" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></g>
+    <g id="i-map" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></g>
+    <g id="i-graph" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="7" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M8 7.5l3 8M16.5 9l-3.5 7M8 6.5h8"/></g>
+    <g id="i-settings" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></g>
+    <g id="i-sun" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></g>
+    <g id="i-moon" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></g>
+    <g id="i-menu" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></g>
+    <g id="i-search" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></g>
+    <g id="i-alert" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></g>
+  </defs>
+</svg>
+
+<div id="layout">
+
+  <div id="sidebar-scrim"></div>
+
+  <!-- Sidebar -->
+  <aside id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">AH</div>
+      <div class="logo-text-wrap">
+        <div class="logo-text">AGENTS-HQ</div>
+        <div class="logo-sub">CONTROL PANEL</div>
+      </div>
+    </div>
+
+    <nav>
+      <div class="nav-group">
+        <div class="nav-group-label">Overview</div>
+        <a href="/" class="nav-item {% block nav_dashboard %}{% endblock %}" data-label="Dashboard" data-group="Overview" data-icon="i-dashboard">
+          <span class="nav-icon"><svg><use href="#i-dashboard"/></svg></span> <span class="nav-txt">Dashboard</span>
+          <span class="nav-badge" id="nav-badge-critical" style="display:none">0</span>
+        </a>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-label">Operations</div>
+        <a href="/agents" class="nav-item {% block nav_agents %}{% endblock %}" data-label="Agents" data-group="Operations" data-icon="i-agents">
+          <span class="nav-icon"><svg><use href="#i-agents"/></svg></span> <span class="nav-txt">Agents</span>
+        </a>
+        <a href="/batch" class="nav-item {% block nav_batch %}{% endblock %}" data-label="Batch OSINT" data-group="Operations" data-icon="i-batch">
+          <span class="nav-icon"><svg><use href="#i-batch"/></svg></span> <span class="nav-txt">Batch OSINT</span>
+        </a>
+        <a href="/cases" class="nav-item {% block nav_cases %}{% endblock %}" data-label="Case Files" data-group="Operations" data-icon="i-cases">
+          <span class="nav-icon"><svg><use href="#i-cases"/></svg></span> <span class="nav-txt">Case Files</span>
+        </a>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-label">Intelligence</div>
+        <a href="/reports" class="nav-item {% block nav_reports %}{% endblock %}" data-label="Reports" data-group="Intelligence" data-icon="i-reports">
+          <span class="nav-icon"><svg><use href="#i-reports"/></svg></span> <span class="nav-txt">Reports</span>
+        </a>
+        <a href="/kb" class="nav-item {% block nav_kb %}{% endblock %}" data-label="Knowledge Base" data-group="Intelligence" data-icon="i-kb">
+          <span class="nav-icon"><svg><use href="#i-kb"/></svg></span> <span class="nav-txt">Knowledge Base</span>
+        </a>
+        <a href="/threat-actors" class="nav-item {% block nav_ta %}{% endblock %}" data-label="Threat Actors" data-group="Intelligence" data-icon="i-ta">
+          <span class="nav-icon"><svg><use href="#i-ta"/></svg></span> <span class="nav-txt">Threat Actors</span>
+        </a>
+        <a href="/iocs" class="nav-item {% block nav_iocs %}{% endblock %}" data-label="IOC Explorer" data-group="Intelligence" data-icon="i-iocs">
+          <span class="nav-icon"><svg><use href="#i-iocs"/></svg></span> <span class="nav-txt">IOC Explorer</span>
+        </a>
+        <a href="/timeline" class="nav-item {% block nav_timeline %}{% endblock %}" data-label="Timeline" data-group="Intelligence" data-icon="i-timeline">
+          <span class="nav-icon"><svg><use href="#i-timeline"/></svg></span> <span class="nav-txt">Timeline</span>
+        </a>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-label">Analysis</div>
+        <a href="/market-intel" class="nav-item {% block nav_market %}{% endblock %}" data-label="Market and Security" data-group="Analysis" data-icon="i-market">
+          <span class="nav-icon"><svg><use href="#i-market"/></svg></span> <span class="nav-txt">Market × Security</span>
+        </a>
+        <a href="/map" class="nav-item {% block nav_map %}{% endblock %}" data-label="Geo Map" data-group="Analysis" data-icon="i-map">
+          <span class="nav-icon"><svg><use href="#i-map"/></svg></span> <span class="nav-txt">Geo Map</span>
+        </a>
+        <a href="/graph" class="nav-item {% block nav_graph %}{% endblock %}" data-label="Intelligence Graph" data-group="Analysis" data-icon="i-graph">
+          <span class="nav-icon"><svg><use href="#i-graph"/></svg></span> <span class="nav-txt">Intelligence Graph</span>
+        </a>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-label">System</div>
+        <a href="/settings" class="nav-item {% block nav_settings %}{% endblock %}" data-label="Settings" data-group="System" data-icon="i-settings">
+          <span class="nav-icon"><svg><use href="#i-settings"/></svg></span> <span class="nav-txt">Settings</span>
+        </a>
+      </div>
+    </nav>
+
+    <div class="sidebar-status">
+      <div class="sidebar-status-title">Egress</div>
+      <div class="status-row"><span class="status-dot" id="health-tor" data-health="tor"></span><span>Tor</span></div>
+      <div class="status-row"><span class="status-dot" id="health-vpn" data-health="vpn"></span><span>VPN</span></div>
+      <div class="status-row"><span class="status-dot" id="health-proxy" data-health="proxy"></span><span>Proxy</span></div>
+      <div class="status-row" style="margin-top:6px;font-size:10px;color:var(--muted)">
+        <span>Agents: <span id="sidebar-agent-count" style="color:var(--online)">-</span></span>
+      </div>
+      <a class="sidebar-foot-link" href="/privacy">Privacy &amp; Data</a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div id="main">
+    <header id="topbar">
+      <button class="icon-btn" data-action="sidebar" title="Toggle sidebar" aria-label="Toggle sidebar"><svg><use href="#i-menu"/></svg></button>
+      <span class="topbar-title">AGENTS-HQ</span>
+      <span class="topbar-sep">/</span>
+      <span class="topbar-breadcrumb">{% block breadcrumb %}Dashboard{% endblock %}</span>
+      <div class="topbar-right">
+        <div class="alert-banner" id="alert-banner">
+          <svg width="12" height="12"><use href="#i-alert"/></svg>
+          <span id="alert-count">0 CRITICAL</span>
+        </div>
+        <button class="kbd-hint" data-action="palette" title="Search (Ctrl/Cmd+K)" aria-label="Command palette"><svg width="13" height="13"><use href="#i-search"/></svg> <b>⌘K</b></button>
+        <button class="icon-btn" data-action="theme" title="Toggle theme" aria-label="Toggle theme"><svg><use href="#i-moon" data-theme-icon/></svg></button>
+      </div>
+    </header>
+
+    <div id="content">
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<script src="/static/js/hud.js"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

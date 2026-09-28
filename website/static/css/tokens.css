@@ -1,0 +1,173 @@
+/* AGENTS-HQ design tokens
+   Light is the bare :root baseline; dark is redefined for system-dark and for
+   the explicit [data-theme="dark"] toggle. Every color the app uses is a token
+   here; nothing else hard-codes a hex value. */
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/static/fonts/jetbrains-mono-latin-400-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/static/fonts/jetbrains-mono-latin-500-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/static/fonts/jetbrains-mono-latin-600-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/static/fonts/jetbrains-mono-latin-700-normal.woff2') format('woff2');
+}
+
+:root {
+  color-scheme: light;
+
+  --bg:           #f4f4f6;
+  --surface:      #ffffff;
+  --surface-2:    #f0f0f3;
+  --surface-3:    #e7e7ec;
+  --border:       #e3e3e8;
+  --border-strong:#d2d2da;
+
+  --text:         #18181b;
+  --text-2:       #52525b;
+  --muted:        #8a8a93;
+
+  --accent:       #7c3aed;
+  --accent-hover: #6d28d9;
+  --accent-weak:  rgba(124,58,237,0.10);
+  --accent-line:  rgba(124,58,237,0.28);
+
+  --critical:     #dc2626;
+  --high:         #ea580c;
+  --medium:       #ca8a04;
+  --low:          #16a34a;
+
+  --online:       #16a34a;
+  --offline:      #dc2626;
+  --running:      #d97706;
+
+  --ioc-ip:       #2563eb;
+  --ioc-cve:      #ea580c;
+  --ioc-hash:     #4b5563;
+  --ioc-onion:    #7c3aed;
+  --ioc-wallet:   #16a34a;
+  --ioc-domain:   #0891b2;
+  --ioc-email:    #db2777;
+
+  --shadow:       0 1px 2px rgba(24,24,27,0.06), 0 4px 16px rgba(24,24,27,0.06);
+  --shadow-lg:    0 8px 40px rgba(24,24,27,0.14);
+
+  --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px;
+  --sp-5: 20px; --sp-6: 24px; --sp-7: 32px; --sp-8: 48px;
+
+  --r-1: 4px; --r-2: 6px; --r-3: 8px; --r-4: 12px;
+
+  --fs-xs: 10px; --fs-sm: 11px; --fs-base: 13px; --fs-md: 15px;
+  --fs-lg: 18px; --fs-xl: 24px; --fs-2xl: 32px;
+
+  --tr: 0.15s ease;
+
+  --z-nav: 20; --z-topbar: 30; --z-overlay: 1000; --z-toast: 1100;
+
+  --sidebar-w: 220px;
+  --sidebar-w-collapsed: 60px;
+  --topbar-h: 52px;
+
+  --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --bg:           #0d0d0d;
+    --surface:      #141414;
+    --surface-2:    #1a1a1a;
+    --surface-3:    #212126;
+    --border:       #262626;
+    --border-strong:#363640;
+
+    --text:         #e8e8ea;
+    --text-2:       #a1a1aa;
+    --muted:        #6b7280;
+
+    --accent:       #8b5cf6;
+    --accent-hover: #a78bfa;
+    --accent-weak:  rgba(139,92,246,0.14);
+    --accent-line:  rgba(139,92,246,0.34);
+
+    --critical:     #ef4444;
+    --high:         #f97316;
+    --medium:       #eab308;
+    --low:          #22c55e;
+
+    --online:       #22c55e;
+    --offline:      #ef4444;
+    --running:      #f59e0b;
+
+    --ioc-ip:       #60a5fa;
+    --ioc-cve:      #fb923c;
+    --ioc-hash:     #9ca3af;
+    --ioc-onion:    #a78bfa;
+    --ioc-wallet:   #4ade80;
+    --ioc-domain:   #38bdf8;
+    --ioc-email:    #f472b6;
+
+    --shadow:       0 1px 2px rgba(0,0,0,0.4), 0 4px 16px rgba(0,0,0,0.3);
+    --shadow-lg:    0 12px 48px rgba(0,0,0,0.6);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg:           #0d0d0d;
+  --surface:      #141414;
+  --surface-2:    #1a1a1a;
+  --surface-3:    #212126;
+  --border:       #262626;
+  --border-strong:#363640;
+
+  --text:         #e8e8ea;
+  --text-2:       #a1a1aa;
+  --muted:        #6b7280;
+
+  --accent:       #8b5cf6;
+  --accent-hover: #a78bfa;
+  --accent-weak:  rgba(139,92,246,0.14);
+  --accent-line:  rgba(139,92,246,0.34);
+
+  --critical:     #ef4444;
+  --high:         #f97316;
+  --medium:       #eab308;
+  --low:          #22c55e;
+
+  --online:       #22c55e;
+  --offline:      #ef4444;
+  --running:      #f59e0b;
+
+  --ioc-ip:       #60a5fa;
+  --ioc-cve:      #fb923c;
+  --ioc-hash:     #9ca3af;
+  --ioc-onion:    #a78bfa;
+  --ioc-wallet:   #4ade80;
+  --ioc-domain:   #38bdf8;
+  --ioc-email:    #f472b6;
+
+  --shadow:       0 1px 2px rgba(0,0,0,0.4), 0 4px 16px rgba(0,0,0,0.3);
+  --shadow-lg:    0 12px 48px rgba(0,0,0,0.6);
+}

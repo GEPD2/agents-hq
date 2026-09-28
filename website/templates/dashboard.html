@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block nav_dashboard %}active{% endblock %}
+{% block breadcrumb %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title">Dashboard</div>
+  <div class="page-sub">Platform status at a glance</div>
+</div>
+
+<!-- Platform health bar -->
+<div class="health-bar">
+  <div class="health-item">
+    <span class="status-dot" id="hb-tor" data-health="tor"></span>
+    <span class="label">Tor</span>
+  </div>
+  <div class="health-item">
+    <span class="status-dot" id="hb-vpn" data-health="vpn"></span>
+    <span class="label">VPN</span>
+  </div>
+  <div class="health-item">
+    <span class="status-dot" id="hb-proxy" data-health="proxy"></span>
+    <span class="label">Proxy</span>
+  </div>
+  <div style="margin-left:auto;font-size:11px;color:var(--muted)" id="health-updated"></div>
+</div>
+
+<!-- Stats row -->
+<div class="grid-4 mb-4">
+  <div class="stat-card" data-metric="reports">
+    <div class="stat-label">Total Reports</div>
+    <div class="stat-value">-</div>
+    <div class="stat-foot"><span class="stat-delta"></span><span class="stat-spark"></span></div>
+  </div>
+  <div class="stat-card" data-metric="kb_docs">
+    <div class="stat-label">KB Documents</div>
+    <div class="stat-value">-</div>
+    <div class="stat-foot"><span class="stat-delta"></span><span class="stat-spark"></span></div>
+  </div>
+  <div class="stat-card" data-metric="threat_actors">
+    <div class="stat-label">Threat Actor Profiles</div>
+    <div class="stat-value">-</div>
+    <div class="stat-foot"><span class="stat-delta"></span><span class="stat-spark"></span></div>
+  </div>
+  <div class="stat-card" data-metric="critical">
+    <div class="stat-label">CRITICAL Findings</div>
+    <div class="stat-value text-critical">-</div>
+    <div class="stat-foot"><span class="stat-delta"></span><span class="stat-spark"></span></div>
+  </div>
+</div>
+
+<!-- Live findings stream (SSE) -->
+<div class="card mb-4">
+  <div class="card-header">
+    <span class="card-title">Live Findings</span>
+    <span class="live-status" id="findings-status" data-state="connecting">
+      <span class="live-dot"></span><span class="live-label">connecting</span>
+    </span>
+  </div>
+  <div id="findings-stream" class="findings-stream">
+    <div class="empty"><span class="spinner"></span></div>
+  </div>
+</div>
+
+<!-- Agent grid + Activity feed -->
+<div class="grid-2 mb-4">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Agent Status</span>
+      <a href="/agents" class="btn btn-outline btn-sm">Manage →</a>
+    </div>
+    <div id="agent-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div class="empty"><span class="spinner"></span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Recent Activity</span>
+      <a href="/reports" class="btn btn-outline btn-sm">All Reports →</a>
+    </div>
+    <div id="activity-feed">
+      <div class="empty"><span class="spinner"></span></div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts row -->
+<div class="grid-2 mb-4">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Reports by Agent</span>
+    </div>
+    <canvas id="chart-by-agent" height="160"></canvas>
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Priority Distribution</span>
+    </div>
+    <canvas id="chart-priority" height="160"></canvas>
+  </div>
+</div>
+
+<!-- Activity Timeline (compact) -->
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">Activity Timeline</span>
+    <a href="/timeline" class="btn btn-outline btn-sm">Full View →</a>
+  </div>
+  <div id="dash-timeline" style="width:100%;min-height:60px">
+    <div class="empty"><span class="spinner"></span></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block head %}
+<script src="/static/vendor/chart.umd.min.js"></script>
+<script src="/static/js/chart-theme.js"></script>
+<script src="/static/js/timeline.js"></script>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/dashboard.js"></script>
+{% endblock %}

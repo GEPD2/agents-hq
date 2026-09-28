@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Case Files{% endblock %}
+{% block nav_cases %}active{% endblock %}
+{% block breadcrumb %}Case Files{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title">Case Files</div>
+  <div class="page-sub">Group related intelligence into named investigations</div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header"><span>New Case</span></div>
+  <div style="padding:12px;display:flex;flex-direction:column;gap:8px">
+    <input type="text" id="case-name" class="input-sm" placeholder="Case name">
+    <input type="text" id="case-desc" class="input-sm" placeholder="Description (optional)">
+    <input type="text" id="case-tags" class="input-sm" placeholder="Tags, comma separated (optional)">
+    <div><button class="btn btn-primary btn-sm" onclick="createCase()">Create Case</button></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span>Cases</span></div>
+  <table class="table" style="width:100%">
+    <thead><tr><th>Name</th><th>Tags</th><th style="text-align:center">Items</th><th>Updated</th><th></th></tr></thead>
+    <tbody id="cases-tbody">
+      <tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted)"><span class="spinner"></span></td></tr>
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/cases.js"></script>
+{% endblock %}

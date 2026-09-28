@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ code }} AGENTS-HQ</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <script>
+    try { var t = localStorage.getItem('ahq-theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="/static/css/tokens.css">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body style="height:100%;overflow:auto">
+  <div style="min-height:100%;display:flex;align-items:center;justify-content:center;padding:24px">
+    <div class="card" style="width:420px;max-width:100%;text-align:center">
+      <div style="font-size:48px;font-weight:700;color:var(--accent);letter-spacing:-0.02em">{{ code }}</div>
+      <div style="font-size:13px;color:var(--text-2);margin-top:8px;line-height:1.6">{{ message }}</div>
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:20px">
+        <a class="btn btn-outline" href="/">Back to dashboard</a>
+        {% if show_login %}<a class="btn btn-primary" href="/login">Sign in</a>{% endif %}
+      </div>
+    </div>
+  </div>
+</body>
+</html>

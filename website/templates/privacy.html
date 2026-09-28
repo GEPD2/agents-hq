@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Privacy and Data{% endblock %}
+{% block breadcrumb %}Privacy &amp; Data{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title">Privacy &amp; Data</div>
+  <div class="page-sub">What this software stores, where, and what leaves the machine</div>
+</div>
+
+<div class="card mb-4" style="max-width:900px">
+  <div class="card-header"><span class="card-title">Summary</span></div>
+  <ul style="padding-left:18px;line-height:1.8;color:var(--text-2);font-size:12px">
+    <li>The Control Panel runs on <b style="color:var(--text)">localhost only</b> (127.0.0.1:8080). It is not exposed to your network or the internet.</li>
+    <li>It sets <b style="color:var(--text)">no cookies</b> and uses <b style="color:var(--text)">no analytics or telemetry</b>.</li>
+    <li>Nothing you view or enter is sent to us or to any third party.</li>
+    <li>The only browser storage is <code>localStorage</code>, for interface preferences, and it never leaves your browser.</li>
+    <li>All intelligence data is stored locally, on your filesystem and in your local MySQL database.</li>
+  </ul>
+</div>
+
+<div class="grid-2" style="max-width:900px;align-items:start">
+  <div class="card">
+    <div class="card-header"><span class="card-title">Stored in your browser</span></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Item</th><th>Key</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td>Theme choice</td><td><code>ahq-theme</code></td><td>Remember dark or light mode</td></tr>
+          <tr><td>Sidebar state</td><td>sidebar flag</td><td>Remember collapsed navigation</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="text-muted" style="font-size:11px;margin-top:10px">No cookies. No login or account, so nothing identifies you to the software.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">Stored on your machine</span></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Data</th><th>Where</th></tr></thead>
+        <tbody>
+          <tr><td>Agent reports</td><td>Filesystem (<code>reports/</code>)</td></tr>
+          <tr><td>Indicators of compromise</td><td>MySQL <code>iocs</code></td></tr>
+          <tr><td>Knowledge base</td><td>MySQL <code>documents</code></td></tr>
+          <tr><td>Threat actor profiles</td><td>MySQL <code>threat_actors</code></td></tr>
+          <tr><td>Case files</td><td>MySQL <code>cases</code>, <code>case_items</code></td></tr>
+          <tr><td>Geolocation cache</td><td>MySQL <code>ip_geo</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="text-muted" style="font-size:11px;margin-top:10px">Retention is under your control; data lives until you delete it.</p>
+  </div>
+</div>
+
+<div class="card mt-3" style="max-width:900px">
+  <div class="card-header"><span class="card-title">What leaves your machine</span></div>
+  <p style="font-size:12px;color:var(--text-2);line-height:1.7">
+    The Control Panel makes <b style="color:var(--text)">no external asset requests</b>: all
+    libraries are vendored under <code>static/vendor/</code>, the font is self-hosted, and the
+    map is fully offline. The one outbound path is under your control:
+  </p>
+  <ul style="padding-left:18px;line-height:1.8;color:var(--text-2);font-size:12px;margin-top:8px">
+    <li><b style="color:var(--text)">Optional alert webhook.</b> If you configure an alert webhook URL in
+      Settings (for example a Slack incoming webhook), the platform POSTs alerts to the URL you chose. Off unless you set it.</li>
+  </ul>
+  <p class="text-muted" style="font-size:11px;margin-top:10px">
+    The intelligence agents (OSINT, recon, dark web, news and market intel) reach out to external
+    sources by design; that activity is separate from the Control Panel. Full text: <code>PRIVACY.md</code> in the repository.
+  </p>
+</div>
+{% endblock %}

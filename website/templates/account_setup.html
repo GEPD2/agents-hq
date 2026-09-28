@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Set your password AGENTS-HQ</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <script>
+    try { var t = localStorage.getItem('ahq-theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="/static/css/tokens.css">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body style="height:100%;overflow:auto">
+  <div style="min-height:100%;display:flex;align-items:center;justify-content:center;padding:24px">
+    <div class="card" style="width:360px;max-width:100%">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+        <div style="width:32px;height:32px;border-radius:6px;background:linear-gradient(135deg,var(--accent),var(--accent-hover));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700">AH</div>
+        <div>
+          <div style="font-size:13px;font-weight:600;letter-spacing:0.04em">AGENTS-HQ</div>
+          <div style="font-size:10px;color:var(--muted);letter-spacing:0.1em">CONTROL PANEL</div>
+        </div>
+      </div>
+      <div style="font-size:14px;font-weight:600;margin-bottom:4px">Set a new password</div>
+      <div class="text-muted" style="font-size:11px;margin-bottom:16px;line-height:1.5">This account still uses the shipped default. Choose a new password before continuing. You can also change the username.</div>
+      <form method="post" action="/account/setup">
+        <label class="form-label" for="new_username">Username</label>
+        <input class="form-input w-full" type="text" id="new_username" name="new_username" value="{{ username }}" autocomplete="username">
+        <label class="form-label" for="new_password" style="margin-top:12px">New password</label>
+        <input class="form-input w-full" type="password" id="new_password" name="new_password" autocomplete="new-password" autofocus>
+        <label class="form-label" for="confirm_password" style="margin-top:12px">Confirm password</label>
+        <input class="form-input w-full" type="password" id="confirm_password" name="confirm_password" autocomplete="new-password">
+        <div class="text-muted" style="font-size:10px;margin-top:8px">At least 8 characters, and not the shipped default.</div>
+        {% if error %}<div class="text-critical" style="font-size:11px;margin-top:8px">{{ error }}</div>{% endif %}
+        <button class="btn btn-primary w-full" type="submit" style="justify-content:center;margin-top:16px">Save and continue</button>
+      </form>
+      <div style="margin-top:14px"><a href="/logout" class="text-muted" style="font-size:10px">Sign out</a></div>
+    </div>
+  </div>
+</body>
+</html>
